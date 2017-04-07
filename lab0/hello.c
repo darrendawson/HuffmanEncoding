@@ -1,3 +1,6 @@
+/* Darren Dawson, dwdawson@ucsc.edu
+   Lab 0, cmps12m
+ */
 #include <stdio.h>
 
 int main(void)
