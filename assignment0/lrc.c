@@ -6,6 +6,135 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+// function prototypes
+int stillPlaying(int money[], int numPlayers);
+int getWinnerIndex(int money[], int numPlayers);
+int getNumRolls(int money);
+int nextIndex(int index, int numPlayers);
+int previousIndex(int index, int numPlayers);
+
+int main(void)
+{
+  // <Variable declarations>
+  int seed;             // user input determines random seed
+  int numPlayers;	
+  int pot = 0;		
+  int winnerIndex;	
+  bool playing = true;  // false if game over
+  int* money = NULL;    // pointer to money array
+
+  //variables about die
+  typedef enum faciem {LEFT, RIGHT, CENTER, PASS} faces;
+  faces die[] = {LEFT, RIGHT, CENTER, PASS, PASS, PASS};
+
+  //variables concerning players
+  int index = 0;  //keeps track of which player's turn currently on
+  const char *names[] = {"Whoopi", "Dale", "Rosie", "Jimmie", "Barbara",
+			 "Kyle", "Raven", "Tony", "Jenny", "Clint"};
+  
+
+  // end variable declaration ---------------------
+  
+  // <User IO>
+  //Get seed from user, set random seed
+  printf("Random Seed: ");
+  scanf("%d", &seed);
+  srand(seed);
+  
+  //Get number of players
+  do
+  {
+    printf("Number of players [2-10]: ");
+    scanf("%d", &numPlayers);
+    //bound numPlayers to [2,10]
+  } while(numPlayers <= 1 || numPlayers > 10);
+
+  //Create money array the size of numPlayers
+  money = (int*) calloc(numPlayers, sizeof(int));
+  
+  for(int i=0;i<numPlayers;i++)
+  {
+    money[i] = 3;  //everyone starts off with $3
+  }
+  // end user IO ---------------------------------
+
+  // <Play Game Loop>
+  do
+  {
+    //take player turn, if still in game
+    if(money[index]>0)
+    {
+      //print current player's name
+      printf("%s rolls... ", names[index]);
+      
+      //determine number of rolls current player takes
+      int numRolls = getNumRolls(money[index]);
+
+      //Roll dice numRolls times
+      for(int i=0; i<numRolls; i++)
+      {
+	//roll the die
+	int randomNum = rand()%6;
+
+	//performs action based off die roll
+	switch(die[randomNum])
+	{
+	  case LEFT:  
+	    //give money to person on left
+	    money[index] = money[index] - 1;
+	    money[previousIndex(index, numPlayers)] =
+	      money[previousIndex(index, numPlayers)] + 1;
+	    
+	    printf(" gives $1 to ");
+	    printf(names[previousIndex(index, numPlayers)]);
+	    break;
+	    
+	  case RIGHT:
+	    //give money to person on right
+	    money[index] = money[index] - 1;
+	    money[nextIndex(index, numPlayers)] =
+	      money[nextIndex(index, numPlayers)] + 1;
+	    
+	    printf(" gives $1 to ");
+	    printf(names[nextIndex(index, numPlayers)]);
+	    break;
+	    
+	  case CENTER:
+	    //give money to pot
+	    money[index] = money[index] - 1;
+	    pot = pot + 1;
+	    printf(" puts $1 in the pot");
+	    break;
+	    
+	  case PASS:
+	    printf(" gets a pass");
+	    break;
+	}
+      }
+      printf("\n"); // new line before next turn
+    }
+    //move on to the next player
+    index = nextIndex(index, numPlayers);
+    
+    //if only 1 player has money, game over
+    playing = stillPlaying(money, numPlayers);
+  } while(playing);
+
+  // end game loop -------------------------------
+
+  //Congratulate the winner
+  winnerIndex = getWinnerIndex(money, numPlayers);
+  printf("%s wins the $%d pot with $%d left in the bank!\n", names[winnerIndex], pot, money[winnerIndex]);
+
+  //End program
+  free(money); //yes plz
+  return 0;
+}
+
+//----------------------------------------------------------
+// Functions!
+//----------------------------------------------------------
+
 //if more than 1 player has money, return true
 //if only 1 player has money, return false
 int stillPlaying(int money[], int numPlayers)
@@ -42,19 +171,9 @@ int getWinnerIndex(int money[], int numPlayers)
 //takes in a number, returns number of rolls player has to take
 int getNumRolls(int money)
 {
-  if(money>=3)
-  {
-    return 3; 
-  }
-  else if(money==2)
-  {
-    return 2; 
-  }
-  else if(money==1)
-  {
-    return 1;
-  }
-  return 0;
+  // if money>=3, player takes 3 rolls
+  // else, return rolls = money
+  return (money > 3) ? 3 : money;
 }
 
 //Returns int value of next index (player to right)
@@ -78,124 +197,6 @@ int previousIndex(int index, int numPlayers)
   }
   return (index-1);
 }
-
-//---------------------------------------------------------
-// MAIN
-//---------------------------------------------------------
-
-int main(void)
-{
-  // <Variable declarations>
-  int seed;
-  int numPlayers;
-  int pot = 0;
-  bool playing = true;
-
-  //variables about die
-  typedef enum faciem {LEFT, RIGHT, CENTER, PASS} faces;
-  faces die[] = {LEFT, RIGHT, CENTER, PASS, PASS, PASS};
-  //int randomNum;
-
-  //variables concerning players
-  int index = 0;  //keeps track of which player's turn currently on
-  const char *names[] = {"Whoopi", "Dale", "Rosie", "Jimmie", "Barbara",
-			 "Kyle", "Raven", "Tony", "Jenny", "Clint"};
-  
-
-  // end variable declaration ---------------------
-  
-  // <User IO>
-  //Get seed from user, set random seed
-  printf("Random Seed: ");
-  scanf("%d", &seed);
-  srand(seed);
-  
-  //Get number of players
-  printf("Number of players: ");
-  scanf("%d", &numPlayers);
-
-  //Create money array the size of numPlayers
-  int money[numPlayers];
-  for(int i=0;i<numPlayers;i++)
-  {
-    money[i] = 3;  //everyone starts off with $3
-  }
-  // end user IO ---------------------------------
-
-  // <Play Game Loop>
-  do
-  {
-    //take player turn, if still in game
-    if(money[index]>0)
-    {
-      //print current player's name
-      printf(names[index]);
-      printf(" rolls... ");
-      
-      //determine number of rolls current player takes
-      int numRolls = getNumRolls(money[index]);
-
-      //Roll dice numRolls times
-      for(int i=0; i<numRolls; i++)
-      {
-	//roll the die
-	int randomNum = rand()%6;
-	int move = die[randomNum];
-
-	//performs action based off die roll
-	switch(move)
-	{
-	  case 0:  
-	    //give money to person on left
-	    money[index] = money[index] - 1;
-	    money[previousIndex(index, numPlayers)] =
-	      money[previousIndex(index, numPlayers)] + 1;
-	    printf(" gives $1 to ");
-	    printf(names[previousIndex(index, numPlayers)]);
-	    break;
-	  case 1:
-	    //give money to person on right
-	    money[index] = money[index]-1;
-	    money[nextIndex(index, numPlayers)] =
-	      money[nextIndex(index, numPlayers)] + 1;
-	    printf(" gives $1 to ");
-	    printf(names[nextIndex(index, numPlayers)]);
-	    break;
-	  case 2:
-	    //give money to pot
-	    money[index] = money[index] - 1;
-	    pot = pot + 1;
-	    printf(" puts $1 in the pot");
-	    break;
-	  case 3:
-	    printf(" gets a pass");
-	}
-      }
-      printf("\n"); // new line before next turn
-    }
-    //move on to the next player
-    index = nextIndex(index, numPlayers);
-    
-    //if only 1 player has money, game over
-    playing = stillPlaying(money, numPlayers);
-  } while(playing);
-
-  // end game loop -------------------------------
-
-  //Congratulate the winner
-  printf(names[getWinnerIndex(money, numPlayers)]);
-  printf(" wins the $");
-  printf("%d", pot);
-  printf(" pot with $");
-  printf("%d", money[getWinnerIndex(money, numPlayers)]);
-  printf(" left in the bank!");
- 
-
-  //End program
-  printf("\n");
-  return 0;
-}
-
 
 
 
