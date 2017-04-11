@@ -71,10 +71,9 @@ int main(void)
 
   //variables concerning players
   int index = 0;  //keeps track of which player's turn currently on
-  /*
   const char *names[] = {"Whoopi", "Dale", "Rosie", "Jimmie", "Barbara",
 			 "Kyle", "Raven", "Tony", "Jenny", "Clint"};
-  */
+  
 
   // end variable declaration ---------------------
   
@@ -99,24 +98,29 @@ int main(void)
   // <Play Game Loop>
   do
   {
-    //player turn, if still in game
+    //take player turn, if still in game
     if(money[index]>0)
     {
       money[index] = money[index] - 1;
-      printf("%d", index);
+
+      //print current player's name
+      printf(names[index]);
       printf(": ");
       printf("%d", money[index]);
       printf("\n");
     }
+    //move on to the next player
     index = nextIndex(index, numPlayers);
     
     //if only 1 player has money, playing=false
     playing = stillPlaying(money, numPlayers);
   } while(playing);
 
+  // end game loop -------------------------------
+
   //Congratulate the winner
   printf("Winner: ");
-  printf("%d", getWinnerIndex(money, numPlayers));
+  printf(names[getWinnerIndex(money, numPlayers)]);
   
   //TEST STUFF BELOW ----------------------------
   //print out random numbers
