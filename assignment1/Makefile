@@ -8,9 +8,6 @@ all: parfait
 parfait: $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) $(CFLAGS) -o parfait -lm  
 
-noFlags:  $(OBJECTS)	
-	$(CC) $(OBJECTS) -o noFlags -lm
-
 parfait.o: parfait.c
 	$(CC) $(CFLAGS) -c parfait.c
 
@@ -22,4 +19,4 @@ sieve.o: sieve.c
 
 .PHONY: clean
 clean:
-	rm -f $(OBJECTS) parfait noFlags
+	rm -f $(OBJECTS) parfait 

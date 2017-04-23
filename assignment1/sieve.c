@@ -1,9 +1,10 @@
 /*
+  Darren Dawson, dwdawson@ucsc.edu
   sieve fills in prototypes from sieve.h
   this program finds prime numbers
 
   I did not write the code for sieve
-  This was given to us by Derrel Long
+  This was given to us by Darrel Long
   It is the sieve of Erosthanus
  */
 
