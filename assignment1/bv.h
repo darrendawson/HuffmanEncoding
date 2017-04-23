@@ -6,8 +6,10 @@
 # include <stdint.h>
 
 typedef struct bitV {
-	uint8_t *v;
+	uint8_t *v; 
 	uint32_t l;
+  // v = the bit vector (array of bvs)
+  // l = length of bitvector
 } bitV;
 
 bitV *newVec(uint32_t);
