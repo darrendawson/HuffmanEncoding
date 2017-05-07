@@ -2,7 +2,7 @@
   Darren Dawson, dwdawson@ucsc.edu
   CMPS 12b: Assignment 2 - sorts
 
-  Statistics:
+  Statistics to print out:
    - size of the array
    - number of moves required (each time you transfer an element)
    - number of comparisons required between elements
@@ -13,6 +13,12 @@
 # include <getopt.h>
 # include <stdint.h>
 # include <stdlib.h>
+
+# include "minsort.h"
+# include "bubblesort.h"
+# include "mergesort.h"
+# include "quicksort.h"
+# include "insertionsort.h"
 
 //---parseArguments------------------------------------------------------
 
@@ -99,10 +105,11 @@ void printArray(uint32_t **numArray, uint32_t numsToPrint)
       newLine++;
     }
   }
-  printf("\n");
+  printf("\n\n");
 }
 
 //---MAIN----------------------------------------------------------------
+
 int main(int argc, char *argv[])
 {
   uint32_t sizeOfArray = 100;
@@ -118,16 +125,82 @@ int main(int argc, char *argv[])
   // Use command line arguments to set up array
   parseArguments(argc, argv, sorts, sizeOfArrayP,
 		 randomSeedP, numsToPrintP);
-  
-  //Create array of random numbers
-  srand(randomSeed);
-  createNumArray(&numArray, sizeOfArray);
 
-  printArray(&numArray, 30);
-  
-  //printf("Size of Array: %d\nRandom Seed: %d\n", sizeOfArray, randomSeed);
-  //printf("nums to print: %d", numsToPrint);
+  // make sure we can only print up to the size of the array
+  if (sizeOfArray < numsToPrint)
+  {
+    numsToPrint = sizeOfArray; 
+  }
 
-  free(numArray);
+  // PRINT THE SORTED FUNCTIONS
+  if (sorts[0] == 1)
+  {
+    // min sort
+    printf("Min Sort\n");
+    printf("%d elements\n", numsToPrint);
+    srand(randomSeed);
+    createNumArray(&numArray, sizeOfArray);
+    minSort(numArray, sizeOfArray);
+    
+    printArray(&numArray, numsToPrint);
+    free(numArray);
+  }
+  if (sorts[1] == 1)
+  {
+    // bubble sort
+    printf("Bubble Sort\n");
+    printf("%d elements\n", numsToPrint);
+    srand(randomSeed);
+    createNumArray(&numArray, sizeOfArray);
+    bubbleSort(numArray, sizeOfArray);
+    
+    printArray(&numArray, numsToPrint);
+    free(numArray);
+  }
+  if (sorts[2] == 1)
+  {
+    // insertion sort
+    printf("Insertion Sort\n");
+    printf("%d elements\n", numsToPrint);
+    srand(randomSeed);
+    createNumArray(&numArray, sizeOfArray);
+    insertionSort(numArray, sizeOfArray);
+    
+    printArray(&numArray, numsToPrint);
+    free(numArray);
+  }
+  if (sorts[3] == 1)
+  {
+    // quick sort
+    int moves = 0;
+    int comparisons = 0;
+    
+    printf("Quick Sort\n");
+    printf("%d elements\n", numsToPrint);
+    srand(randomSeed);
+    createNumArray(&numArray, sizeOfArray);
+    quickSort(numArray, 0, sizeOfArray, &moves, &comparisons);
+    printf("%d moves\n%d comparisons\n", moves, comparisons);
+
+    printArray(&numArray, numsToPrint);
+    free(numArray);
+  }
+  if(sorts[4] == 1)
+  {
+    // merge sort
+    int moves = 0;
+    int comparisons = 0;
+    
+    printf("Merge Sort\n");
+    printf("%d elements\n", numsToPrint);
+    srand(randomSeed);
+    createNumArray(&numArray, sizeOfArray);
+    mergeSort(numArray, sizeOfArray, &moves, &comparisons);
+    printf("%d moves\n%d comparisons\n", moves, comparisons);
+
+    printArray(&numArray, numsToPrint);
+    free(numArray);
+  }
+ 
   return 0;
 }
