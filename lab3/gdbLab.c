@@ -69,12 +69,17 @@ struct cartesianCoordinate
  * @param y The value of the y axis.
  * @return Pointer to a structure of type cartesianCoordinate.
  */
-void makePoint(struct cartesianCoordinate *point, float x, float y)
+struct cartesianCoordinate *makePoint(float x, float y)
 {
+  struct cartesianCoordinate *newPoint;
+  newPoint = (struct cartesianCoordinate*)
+    calloc(1, sizeof(struct cartesianCoordinate));
+ 
+  /* We set the respective values */
+  newPoint->x = x;
+  newPoint->y = y;
 
-    /* We set the respective values */
-    point->x = x;
-    point->y = y;
+  return newPoint;
 }
 
 /**
@@ -123,10 +128,6 @@ int main(void)
     struct cartesianCoordinate *firstPoint;
     struct cartesianCoordinate *secondPoint;
 
-    firstPoint = (struct cartesianCoordinate*)
-      calloc(1, sizeof(struct cartesianCoordinate));
-    secondPoint = (struct cartesianCoordinate*)
-      calloc(1, sizeof(struct cartesianCoordinate));
 
     /* --- DO NOT CHANGE --- */
     if (!correctOS)
@@ -137,13 +138,19 @@ int main(void)
     /* --- END --- */
 
     /* Get first point */
-    makePoint(firstPoint, FIRST_X, FIRST_Y);
+    firstPoint = makePoint(FIRST_X, FIRST_Y);
 
     /* Get second point */
-    makePoint(secondPoint, SECOND_X, SECOND_Y);
+    secondPoint = makePoint(SECOND_X, SECOND_Y);
 
     /* Get the distance and print it */
     distance = findDistance(firstPoint, secondPoint);
     printf("Distance Between Points: %.2f\n", distance);
+
+    // free memory
+    free(firstPoint);
+    free(secondPoint);
+    firstPoint = NULL;
+    secondPoint = NULL;
     return 0;
 }
