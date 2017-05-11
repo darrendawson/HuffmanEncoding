@@ -30,15 +30,15 @@ Why was the segmentation fualt occuring?
 How did you fix it?
 -------------------
  - The root problem was that firstPoint and secondPoint were never allocated proper memory. These pointers were allowed to be created locally
-	I fixed this by using calloc to create firstPoint and secondPoint in memory before assigning X and Y values to them.
-	I added the calloc step after the declaration step and before calling makePoint.
+	I fixed this by using calloc to allocate memory for a new point in makePoint() and assigning X and Y values to that new point.
+	I then return the pointer, so that the function
+		
+		firstPoint = makePoint(x,y)
 
- - As a result, I changed makePoint to be a void function and gave it an extra argument of a cartesianCoordinate pointer.
-	
-		void makePoint(struct cartesianCoordinate* point, int x, int y)
+	sets firstPoint to point to the newly allocated cartesianCoordinate in memory.
 
-	The function doesn't return anything and would dereference a point that actually exists in memory. 
-	As a result, after calling makePoint(), the values assigned to the new point persist and the pointer exists.
+
+	As a result, after calling makePoint(), the values assigned to the new point persist and the pointer exists is passed back.
 	This way, when you call findDistance(), it can actually dereference the pointers, get the proper coordinates, and do the math.
 
 
