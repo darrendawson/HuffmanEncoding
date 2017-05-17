@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99
-OBJECTS = banhammer.o aes.o
+CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99 -g
+OBJECTS = banhammer.o aes.o hash.o bf.o
 
 .PHONY: all
 all: banhammer
@@ -13,6 +13,12 @@ banhammer.o: banhammer.c
 
 aes.o: aes.c
 	$(CC) $(CFLAGS) -c aes.c
+
+hash.o: hash.c
+	$(CC) $(CFLAGS) -c hash.c
+
+bf.o: bf.c
+	$(CC) $(CFLAGS) -c bf.c
 
 .PHONY: clean
 clean:
