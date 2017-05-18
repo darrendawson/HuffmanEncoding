@@ -51,7 +51,7 @@ void parseArguments(int argc, char*argv[], int *printLetter,
   }
 }
 
-//---Read Files----------------------------------------------------------
+//---SetUpFilters--------------------------------------------------------
 
 // reads a file to set up filter
 // from man page
@@ -71,8 +71,22 @@ void setUpFilters(bloomF *filter1, bloomF *filter2, char *filePath)
     }
   }
 
-  fclose(fp);
-  
+  fclose(fp);  
+  free(line);
+}
+
+//---printStandardIn-----------------------------------------------------
+
+void printStandardIn()
+{
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+
+  while ((read = getline(&line, &len, stdin)) != -1) {
+    printf("%s", line);
+  }
+
   free(line);
 }
 
@@ -111,13 +125,15 @@ void printStatistics() {
 
 int main(int argc, char *argv[]) {
 
+  //----------------------
+  // 1) DECLARE VARIABLES
+  //----------------------
   
-  // DECLARE VARIABLES-------
   // parameters
-  int printLetter = 1;
   int hashSize = 10000;
   int bloomSize = 10485776; // 2^20 default size
   int moveToFront = 0;
+  int printLetter = 1;
 
   // set up salts for filter 1, filter 2, and hash table
   uint32_t salt1[] = {0xDeadD00d, 0xFadedBee, 0xBadAb0de, 0xC0c0aB0a};
@@ -126,34 +142,42 @@ int main(int argc, char *argv[]) {
 
   bloomF *filter1;
   bloomF *filter2;
-  //--------------------------
 
-  // 1) get instructions from command line
+
+  //---------------------------------------
+  // 2) get instructions from command line
+  //---------------------------------------
   parseArguments(argc, argv, &printLetter, &hashSize,
 		 &bloomSize, &moveToFront);
 
-  // 2) set up bloom filter
+  //------------------------
+  // 3) set up bloom filter
+  //------------------------
   filter1 = newFilter(hashSize, salt1);
   filter2 = newFilter(hashSize, salt2);
   setUpFilters(filter1, filter2, "badspeak.txt");
 
-  // 3) set up hash table 
-  
-  // 4) get user string
-
-  // 5) go through string word by word, checking filter/hash
-  //    save flagged words to two different 
-
-
-  //--------------
-  
   printFilter(filter1);
   printf("\n\n");
   printFilter(filter2);
 
-  //-----------------
+  //----------------------
+  // 4) set up hash table
+  //----------------------
+
+  //----------------------
+  // 5) get user string
+  //----------------------
+
+  printStandardIn();
+
+  // 6) go through string word by word, checking filter/hash
+  //    save flagged words to two different 
 
 
+  //------------------
+  // 7) print results
+  //------------------
   /*
   //---print results---
   if (printLetter == 1)
