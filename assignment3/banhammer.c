@@ -70,6 +70,8 @@ void setUpFilters(bloomF *filter1, bloomF *filter2, char *filePath)
       setBit(filter2, line);
     }
   }
+
+  fclose(fp);
   
   free(line);
 }
