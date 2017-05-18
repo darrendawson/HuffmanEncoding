@@ -2,34 +2,29 @@
 // this header was provided by Darrell Long
 // names of functions have been made more descriptive
 
-# include <stdint.h>
-# include <stdlib.h>
-# include <stdio.h>
-
-# include "hash.h"
-
-
-typedef struct bloomF {
-  uint8_t *v; // Vector
-  uint32_t l; // length
-  uint32_t s; // salt (was s[4])
-} bloomF;
-
+# include "bf.h"
 
 // Each function has its own hash functions, determined by salt
-uint32_t hashFilter(char *key)
+uint32_t hashFilter(bloomF *filter, char *key)
 {
-  // add salt to key
+  uint32_t index = 0;
+  char keyToHash[100];
 
-  // hash it
-  uint32_t index = hash((uint8_t*)key);
+  if(strlen(key) < 60)
+  {
+    // add salt to key
+    sprintf(keyToHash, "%s%d%d%d%d", key, filter->s[0], filter->s[1],
+	    filter->s[2], filter->s[3]);
+    // hash it
+    index = hash((uint8_t*)keyToHash);
+  }
   return index;
 }
 
 //---newFilter-----------------------------------------------------------
 
 // creates new bloom filter of (length, hash function)
-struct bloomF *newFilter(uint32_t length, uint32_t *hashFunction)
+struct bloomF *newFilter(uint32_t length, uint32_t *salt)
 {
   bloomF *filter;
   
@@ -39,7 +34,12 @@ struct bloomF *newFilter(uint32_t length, uint32_t *hashFunction)
   // create vector array in memory
   filter->v = (uint8_t*)calloc(length/8+1, sizeof(uint32_t));
   filter->l = length;
-  filter->s = *hashFunction; // salt? used to be a uint32_t *
+
+  // set up salt
+  filter->s[0] = salt[0];
+  filter->s[1] = salt[1];
+  filter->s[2] = salt[2];
+  filter->s[3] = salt[3];
 
   return filter;
 }
@@ -101,8 +101,7 @@ uint32_t numBits(bloomF *filter)
 void setBit(bloomF *filter, char *key)
 {
   // index = hashed index % length
-  uint32_t index = hashFilter(key) % (filter->l);
-  printf("index: %d\n", index % (filter->l));
+  uint32_t index = hashFilter(filter, key) % (filter->l);
   filter->v[index/8] |= 0x1 << index%8;
   return;
 }
@@ -112,8 +111,7 @@ void setBit(bloomF *filter, char *key)
 // clears an entry in bloom filter
 void clearBit(bloomF *filter, char *key)
 {
-  uint32_t index = hashFilter(key) % (filter->l);
-  printf("remove index: %d\n", index % (filter->l));
+  uint32_t index = hashFilter(filter, key) % (filter->l);
   filter->v[index/8] &= ~(0x1 << index%8);
   return;
 }
@@ -123,7 +121,7 @@ void clearBit(bloomF *filter, char *key)
 // check membership in bloom filter
 uint32_t checkMembership(bloomF *filter, char *key)
 {
-  if (getBitValue(filter, hashFilter(key) % (filter->l)) == 1)
+  if (getBitValue(filter, hashFilter(filter, key) % (filter->l)) == 1)
   {
     return 1;
   }

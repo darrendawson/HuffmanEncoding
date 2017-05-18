@@ -8,15 +8,18 @@
 # include <stdint.h>
 # include <stdlib.h>
 # include <stdio.h>
+# include <string.h>
+
+# include "hash.h"
 
 typedef struct bloomF {
   uint8_t *v; // Vector
   uint32_t l; // length
-  uint32_t s; // was s[4]
+  uint32_t s[4]; // salt
 } bloomF;
 
 // Each function has its own hash functions, determined by salt
-uint32_t hashFilter(char *); // used to be (bloom F*, char *)
+uint32_t hashFilter(bloomF *, char *); // used to be (bloom F*, char *)
 
 // creates new bloom filter of (length, hash function)
 struct bloomF *newFilter(uint32_t, uint32_t *);

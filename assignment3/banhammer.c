@@ -4,12 +4,12 @@
  banhammer scrubs text
  */
 
+# define _GNU_SOURCE // so file reading works on linux
 # include <stdio.h>
+# include <stdlib.h>
 # include <unistd.h>
 # include <getopt.h>
 # include <stdint.h>
-# include <stdlib.h>
-
 
 # include "aes.h"
 # include "hash.h"
@@ -53,25 +53,25 @@ void parseArguments(int argc, char*argv[], int *printLetter,
 
 //---Read Files----------------------------------------------------------
 
-void readFile()
+// reads a file to set up filter
+// from man page
+void setUpFilters(bloomF *filter1, bloomF *filter2, char *filePath)
 {
-  /*
   FILE *fp;
-    char *line = NULL;
-    size_t len = 0;
-    ssize_t read;
-
-   fp = fopen("/etc/motd", "r");
-    if (fp == NULL)
-        exit(EXIT_FAILURE);
-
-   while ((read = getline(&line, &len, fp)) != -1) {
-        printf("Retrieved line of length %zu :\n", read);
-        printf("%s", line);
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+  
+  fp = fopen(filePath, "r");
+  if (fp != NULL)
+  {
+    while ((read = getline(&line, &len, fp)) != -1) {
+      setBit(filter1, line);
+      setBit(filter2, line);
     }
-
-   free(line);
-   exit(EXIT_SUCCESS); */
+  }
+  
+  free(line);
 }
 
 //---Print Stuff---------------------------------------------------------
@@ -111,52 +111,48 @@ int main(int argc, char *argv[]) {
 
   
   // DECLARE VARIABLES-------
+  // parameters
   int printLetter = 1;
   int hashSize = 10000;
   int bloomSize = 10485776; // 2^20 default size
   int moveToFront = 0;
+
+  // set up salts for filter 1, filter 2, and hash table
+  uint32_t salt1[] = {0xDeadD00d, 0xFadedBee, 0xBadAb0de, 0xC0c0aB0a};
+  uint32_t salt2[] = {0xDeadBeef, 0xFadedB0a, 0xCafeD00d, 0xC0c0aB0a};
+  //uint32_t saltH[] = {0xDeadD00d, 0xFadedBee, 0xBadAb0de, 0xC0c0Babe};
+
+  bloomF *filter1;
+  bloomF *filter2;
   //--------------------------
 
   // 1) get instructions from command line
   parseArguments(argc, argv, &printLetter, &hashSize,
 		 &bloomSize, &moveToFront);
 
-  // 2) set up bloom filter/ hash
+  // 2) set up bloom filter
+  filter1 = newFilter(hashSize, salt1);
+  filter2 = newFilter(hashSize, salt2);
+  setUpFilters(filter1, filter2, "badspeak.txt");
 
-  // 3) get user string
+  // 3) set up hash table 
+  
+  // 4) get user string
 
-  // 4) go through string word by word, checking filter/hash
+  // 5) go through string word by word, checking filter/hash
   //    save flagged words to two different 
 
-  /*
-  // !!! TEST HASH
-  uint8_t *testChars = (uint8_t*)"test";
-  uint32_t test = hash(testChars);
-  printf("hash: %d\n", test);
-  // !!!
-  */
 
   //--------------
-
-  uint32_t testFunction = 1;
-  bloomF *filter = newFilter(hashSize, &testFunction);
-
-  setBit(filter, "hello");
-  setBit(filter, "helo");
-  setBit(filter, "hel");
-
-  printf("hello: %d\n",checkMembership(filter, "hello"));
-  clearBit(filter, "hello");
-  printf("hello: %d\n",checkMembership(filter, "hello"));
-  printFilter(filter);
-  printf("\n");
-
-  readFile();
-
   
-//-----------------
+  printFilter(filter1);
+  printf("\n\n");
+  printFilter(filter2);
 
-  
+  //-----------------
+
+
+  /*
   //---print results---
   if (printLetter == 1)
   {
@@ -166,10 +162,10 @@ int main(int argc, char *argv[]) {
   {
     printStatistics();
   }
-
+  */
   //---exit program---
-  deleteFilter(filter);
-
-  
+  deleteFilter(filter1);
+  deleteFilter(filter2);
+  printf("\n");
   return 0;
 }
