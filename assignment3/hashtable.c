@@ -125,7 +125,7 @@ void printTable(hTable *table)
     if (table->words[i] != NULL)
     {
       //printf("%d: ", i);
-      printLL(table->words[i]);
+      printLL(table->words[i], table->numSeeks);
       printf("\n");
     }
   }
