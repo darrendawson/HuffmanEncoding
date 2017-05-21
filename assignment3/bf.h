@@ -9,6 +9,7 @@
 # include <stdlib.h>
 # include <stdio.h>
 # include <string.h>
+# include <float.h>
 
 # include "hash.h"
 
@@ -47,6 +48,9 @@ uint32_t checkMembership(bloomF *, char *);
 
 // prints bloom filter
 uint32_t printFilter(bloomF *);
+
+// returns percent that filter is filled
+float findPercentFull(bloomF *);
 
 
 # endif

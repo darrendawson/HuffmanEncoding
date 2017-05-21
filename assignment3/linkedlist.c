@@ -55,7 +55,6 @@ void delLL(listNode *list)
 listNode *insertLL(listNode *list, char *old, char *new)
 {
   listNode *newHead = newNode(old, new);
-  // oldHead = *list
 
   if (list != NULL)
   {
@@ -68,13 +67,15 @@ listNode *insertLL(listNode *list, char *old, char *new)
 //---findLL--------------------------------------------------------------
 
 // returns node that contains key
-listNode *findLL(listNode *list, char *key)
-{
-
+listNode *findLL(listNode *list, char *key, int *seek, int *findLLCount)
+{ 
   listNode *tempList = list;
-
+  
   if (tempList != NULL)
   {
+    (*findLLCount)++; // for stats
+    (*seek)++; // increment stat
+    
     // checks in the case of a one node linked list
     if (strcmp(tempList->oldspeak, key) == 0)
     {
@@ -84,6 +85,8 @@ listNode *findLL(listNode *list, char *key)
     // checks in case of multi node linked list
     while (tempList->next != NULL)
     {
+      (*seek)++;
+      
       // if key = oldspeak, we've found it!
       if (strcmp(tempList->oldspeak, key) == 0)
       {
@@ -98,14 +101,16 @@ listNode *findLL(listNode *list, char *key)
 //---printLL-------------------------------------------------------------
 
 // prints the list out
-void printLL(listNode *list)
+void printLL(listNode *list, int *seeks)
 {
   listNode *tempList = list;
 
   while (tempList->next != NULL)
   {
+    (*seeks)++; // for stats
     printf("%s -> %s\n", tempList->oldspeak, tempList->newspeak);
     tempList = tempList->next;
   }
   printf("%s -> %s", tempList->oldspeak, tempList->newspeak);
 }
+ 

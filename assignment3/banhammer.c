@@ -10,6 +10,7 @@
 # include <unistd.h>
 # include <getopt.h>
 # include <stdint.h>
+# include <float.h>
 
 # include "aes.h"
 # include "hash.h"
@@ -55,7 +56,7 @@ void parseArguments(int argc, char*argv[], int *printLetter,
 
 // reads badspeak.txt to set up filter
 // from man page
-void setUpBadSpeakFilters(bloomF *filter1, bloomF *filter2)
+void setUpBadSpeakFilters(bloomF *filter1, bloomF *filter2, int *dict)
 {
   FILE *fp;
   char *line = NULL;
@@ -68,6 +69,7 @@ void setUpBadSpeakFilters(bloomF *filter1, bloomF *filter2)
     while ((read = getline(&line, &len, fp)) != -1) {
       setBit(filter1, line);
       setBit(filter2, line);
+      (*dict)++; // for stats
     }
   }
 
@@ -77,7 +79,7 @@ void setUpBadSpeakFilters(bloomF *filter1, bloomF *filter2)
 
 
 // reads newspeak.txt and adds first word in each line to filters
-void setUpNewSpeakFilters(bloomF *filter1, bloomF *filter2)
+void setUpNewSpeakFilters(bloomF *filter1, bloomF *filter2, int *trans)
 {
   FILE *fp;
   char *line = NULL;
@@ -92,6 +94,7 @@ void setUpNewSpeakFilters(bloomF *filter1, bloomF *filter2)
       sscanf(line, "%s", oldspeak);
       setBit(filter1, oldspeak);
       setBit(filter2, oldspeak);
+      (*trans)++;
     }
   }
 
@@ -132,7 +135,7 @@ void setUpTable(hTable *table)
 // checks each word against bloom filters and hashtable to find problems
 // compiles lists of words that are (banned) or (should be changed)
 void checkInput(bloomF *filter1, bloomF *filter2, hTable *table,
-		hTable *bannedWords, hTable *wordsToChange)
+		hTable *bannedWords, hTable *wordsToChange, int *text)
 {
   char *line = NULL;
   size_t len = 0;
@@ -148,6 +151,8 @@ void checkInput(bloomF *filter1, bloomF *filter2, hTable *table,
     // loop through words
     while (word != NULL)
     {
+      (*text) += 1; // for stats
+      
       // only check a word if it's in the bloom filters
       if (checkMembership(filter1, word) == 1 ||
 	  checkMembership(filter2, word) == 1)
@@ -234,12 +239,19 @@ void printResults(hTable *bannedWords, hTable *wordsToChange)
 }
 
 // prints out statistics about text
-void printStatistics() {
+void printStatistics(int seeks, float average, int dictionary,
+		     int translations, int text,
+		     float filter1, float filter2) {
   printf("Statistics\n");
+  printf("Seeks: %d\tAverage: %f\n", seeks, average);
+  printf("Dictionary: %d\tTranslations: %d\n", dictionary, translations);
+  printf("Text: %d\n", text);
+  printf("Densities: %f,   %f", filter1, filter2);
 }
 
-//---MAIN----------------------------------------------------------------
-
+//=====================================================================
+//---MAIN--------------------------------------------------------------||
+//=====================================================================
 int main(int argc, char *argv[]) {
 
   //----------------------
@@ -250,8 +262,20 @@ int main(int argc, char *argv[]) {
   int hashSize = 10000;
   int bloomSize = 10485776; // 2^20 default size
   int moveToFront = 0;
-  int printLetter = 1;
+  int printLetter = 1; // if 1, print normal output
 
+  // statistics  
+  int seeks = 0; // number of nodes inspected in LL  
+  float average = 0; // (times findLL called) / seeks 
+  int dictionary = 0; // number of entries in badspeak.txt
+  int translations = 0; // number of lines in newspeak.txt
+  int text = 0; // number of words read from stdin
+  
+  // ratio of set bits to unset bits in filter
+  float filter1Density = 0; 
+  float filter2Density = 0;
+  
+  
   // set up salts for filter 1, filter 2, and hash table
   uint32_t salt1[] = {0xDeadD00d, 0xFadedBee, 0xBadAb0de, 0xC0c0aB0a};
   uint32_t salt2[] = {0xDeadBeef, 0xFadedB0a, 0xCafeD00d, 0xC0c0aB0a};
@@ -279,11 +303,11 @@ int main(int argc, char *argv[]) {
   //-------------------------
   filter1 = newFilter(bloomSize, salt1);
   filter2 = newFilter(bloomSize, salt2);
- 
+  
   // hash the filters
-  setUpBadSpeakFilters(filter1, filter2);
-  setUpNewSpeakFilters(filter1, filter2);
-
+  setUpBadSpeakFilters(filter1, filter2, &dictionary);
+  setUpNewSpeakFilters(filter1, filter2, &translations);
+  
   //----------------------
   // 4) set up hash table |
   //----------------------
@@ -294,23 +318,33 @@ int main(int argc, char *argv[]) {
   //----------------------------
   // 5) open up input, check it |
   //----------------------------
-  checkInput(filter1, filter2, table, bannedWords, wordsToChange);
-
+  checkInput(filter1, filter2, table, bannedWords, wordsToChange, &text);
+  
   //------------------
   // 6) print results |
   //------------------
-  printResults(bannedWords, wordsToChange);
 
-  /*
   if (printLetter == 1)
   {
-    printThoughtCrimes();
+    printResults(bannedWords, wordsToChange);
   }
   else
   {
-    printStatistics();
+    // calculate stats
+    seeks = table->numSeeks[0] + wordsToChange->numSeeks[0] +
+      bannedWords->numSeeks[0];
+    average = table->findLLCalls[0] + wordsToChange->findLLCalls[0] +
+      bannedWords->findLLCalls[0];
+    average = (float)(average)/(float)(seeks);
+    
+    filter1Density = findPercentFull(filter1);
+    filter2Density = findPercentFull(filter2);
+
+    // print stats
+    printStatistics(seeks, average, dictionary, translations, text,
+		    filter1Density, filter2Density);
   }
-  */
+
 
   //-------------------------------------
   // Exit Program

@@ -140,3 +140,20 @@ uint32_t printFilter(bloomF *filter)
   return 1;
 }
 
+//---findPercentFull------------------------------------------------------
+
+float findPercentFull(bloomF *filter)
+{
+  uint32_t filled = 0;
+  float percent = 0;
+  for (uint32_t i = 0; i < (filter->l); i++)
+  {
+    if (getBitValue(filter, i) == 1)
+    {
+      filled++;
+    }
+  }
+  percent = (float)filled/(filter->l) * 100;
+  return percent;
+}
+

@@ -20,6 +20,8 @@ typedef struct hTable {
   uint32_t s[4]; // salt
   uint32_t tableSize;
   int moveToFront; // if 1, move to front is activated
+  int *numSeeks;
+  int *findLLCalls;
 } hTable;
 
 // returns index

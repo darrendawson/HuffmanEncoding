@@ -31,6 +31,10 @@ hTable *createNewTable(uint32_t size, uint32_t *salt, int move)
   // allocate memory for words
   table->words = (listNode**)calloc(size, sizeof(listNode*));
 
+  // allocate memory for numSeeks and findLLCalls
+  table->numSeeks = (int*)calloc(1, sizeof(int));
+  table->findLLCalls = (int*)calloc(1, sizeof(int));
+
   // set up other parts of table
   table->tableSize = size;
   table->s[0] = salt[0];
@@ -38,6 +42,7 @@ hTable *createNewTable(uint32_t size, uint32_t *salt, int move)
   table->s[2] = salt[2];
   table->s[3] = salt[3];
   table->moveToFront = move;
+  table->numSeeks[0] = 0;
 
   return table;
 }
@@ -55,7 +60,7 @@ void addWordToTable(hTable *table, char *old, char *new)
   }
   else
   {
-    table->words[index] = insertLL(table->words[index], old, new);
+    table->words[index] = insertLL(table->words[index], old,new);
   }
 }
 
@@ -71,6 +76,8 @@ void deleteTable(hTable *table)
       delLL(table->words[i]);
     }
   }
+  free(table->numSeeks);
+  free(table->findLLCalls);
   free(table->words);
   free(table);
 }
@@ -82,8 +89,9 @@ int checkTableMembership(hTable *table, char *text)
 {
   uint32_t index = getHashedIndex(table, text);
   //printf("INDEX OF %s: %d\n", text, index);
-  listNode *found = findLL(table->words[index], text);
-
+  listNode *found = findLL(table->words[index], text,
+			   table->numSeeks, table->findLLCalls);
+  
   if (found == NULL)
   {
     return 0;
@@ -97,7 +105,8 @@ int checkTableMembership(hTable *table, char *text)
 char *getNewSpeak(hTable *table, char *text)
 {
   uint32_t index = getHashedIndex(table, text);
-  listNode *found = findLL(table->words[index], text);
+  listNode *found = findLL(table->words[index], text,
+			   table->numSeeks, table->findLLCalls);
 
   if (found != NULL)
   {

@@ -7,6 +7,7 @@
 # include <stdint.h>
 # include <stdlib.h>
 # include <string.h>
+# include <stdbool.h>
 
 typedef struct listNode listNode;
 
@@ -30,9 +31,9 @@ void delLL(listNode *);
 listNode *insertLL(listNode *, char *, char *);
 
 // searches a Linked List for a word and returns that node
-listNode *findLL(listNode *, char *);
+listNode *findLL(listNode *, char *, int *, int *);
 
 // prints out a list
-void printLL(listNode *);
+void printLL(listNode *, int *);
 
 #endif
