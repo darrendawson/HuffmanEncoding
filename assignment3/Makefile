@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99 -g
-OBJECTS = banhammer.o aes.o hash.o bf.o
+OBJECTS = banhammer.o aes.o hash.o bf.o hashtable.o linkedlist.o 
 
 .PHONY: all
 all: banhammer
@@ -19,6 +19,13 @@ hash.o: hash.c
 
 bf.o: bf.c
 	$(CC) $(CFLAGS) -c bf.c
+
+hashtable.o: hashtable.c
+	$(CC) $(CFLAGS) -c hashtable.c
+
+linkedlist.o: linkedlist.c
+	$(CC) $(CFLAGS) -c linkedlist.c
+
 
 .PHONY: clean
 clean:

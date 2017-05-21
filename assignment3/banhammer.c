@@ -14,7 +14,7 @@
 # include "aes.h"
 # include "hash.h"
 # include "bf.h"
-
+# include "hashtable.h"
 
 //---parseArguments------------------------------------------------------
 
@@ -53,16 +53,16 @@ void parseArguments(int argc, char*argv[], int *printLetter,
 
 //---SetUpFilters--------------------------------------------------------
 
-// reads a file to set up filter
+// reads badspeak.txt to set up filter
 // from man page
-void setUpFilters(bloomF *filter1, bloomF *filter2, char *filePath)
+void setUpBadSpeakFilters(bloomF *filter1, bloomF *filter2)
 {
   FILE *fp;
   char *line = NULL;
   size_t len = 0;
   ssize_t read;
   
-  fp = fopen(filePath, "r");
+  fp = fopen("badspeak.txt", "r");
   if (fp != NULL)
   {
     while ((read = getline(&line, &len, fp)) != -1) {
@@ -75,16 +75,111 @@ void setUpFilters(bloomF *filter1, bloomF *filter2, char *filePath)
   free(line);
 }
 
-//---printStandardIn-----------------------------------------------------
 
-void printStandardIn()
+// reads newspeak.txt and adds first word in each line to filters
+void setUpNewSpeakFilters(bloomF *filter1, bloomF *filter2)
+{
+  FILE *fp;
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+  char oldspeak[30];
+  
+  fp = fopen("newspeak.txt", "r");
+  if (fp != NULL)
+  {
+    while ((read = getline(&line, &len, fp)) != -1) {
+      sscanf(line, "%s", oldspeak);
+      setBit(filter1, oldspeak);
+      setBit(filter2, oldspeak);
+    }
+  }
+
+  fclose(fp);  
+  free(line);
+}
+
+//---setUpTable----------------------------------------------------------
+
+// read from a file, newspeak, split into two words and add to hash table
+void setUpTable(hTable *table)
+{
+  FILE *fp;
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+
+  char oldspeak[30];
+  char newspeak[30];
+  
+  fp = fopen("newspeak.txt", "r");
+  if (fp != NULL)
+  {
+    while ((read = getline(&line, &len, fp)) != -1) {
+      sscanf(line, "%s%s", oldspeak, newspeak);
+      //printf("[%s, %s]\n", oldspeak, newspeak);
+      addWordToTable(table, oldspeak, newspeak); 
+    }
+  }
+
+  fclose(fp);  
+  free(line);
+}
+
+//---checkInput----------------------------------------------------------
+
+// opens a text file from standard in
+// checks each word against bloom filters and hashtable to find problems
+// compiles lists of words that are (banned) or (should be changed)
+void checkInput(bloomF *filter1, bloomF *filter2, hTable *table,
+		hTable *bannedWords, hTable *wordsToChange)
 {
   char *line = NULL;
   size_t len = 0;
   ssize_t read;
 
+  // go through file, line by line
   while ((read = getline(&line, &len, stdin)) != -1) {
-    printf("%s", line);
+
+    //break up line into words based off spaces
+    // get first word of line
+    char *word = strtok(line, " ");
+
+    // loop through words
+    while (word != NULL)
+    {
+      // only check a word if it's in the bloom filters
+      if (checkMembership(filter1, word) == 1 ||
+	  checkMembership(filter2, word) == 1)
+      {
+	
+	// if checkTableMembership() returns something, it has a
+	// newspeak variant and we want to add it
+	if (checkTableMembership(table, word) == 1)
+	{
+	  // only add word to wordsToChange if it isn't already there
+	  if (checkTableMembership(wordsToChange, word) == 0)
+	  {
+	    // add to wordsToChange
+	    char *newspeak = getNewSpeak(table, word);
+	    addWordToTable(wordsToChange, word, newspeak);
+	  }
+	}
+	else
+	{
+	  // if not in table, then the word is a complete violation
+	  //bannedWords[i] = word;
+	  //printf("%s is BANNED\n", word);
+	  if (checkTableMembership(bannedWords, word) == 0)
+	  {
+	    addWordToTable(bannedWords, word, "");
+	  }
+	}
+
+      }
+     
+      word = strtok(NULL, " "); // move on to next word
+    }
   }
 
   free(line);
@@ -93,8 +188,6 @@ void printStandardIn()
 //---Print Stuff---------------------------------------------------------
 
 // prints out thoughtcrime message and errors
-// thought Crimes contains
-// thoughtCrimes, numCrimes
 void printThoughtCrimes() {
   printf("Dear Comrade,\n\nYou have chosen to use degenerate words ");
   printf("that may cause hurt\nfeelings or cause your comrades to ");
@@ -102,19 +195,43 @@ void printThoughtCrimes() {
   printf("correct your wrongthink and\nsave community consensus we ");
   printf("will be sending you to joycamp\nadministered by Miniluv.\n\n");
   printf("Your errors:\n\n");
-
-  /*
-  for (int i = 0; i< numCrimes; i++) {
-    // print out thoughtCrimes
-    } */
 }
 
 
 // prints out words that were flagged and changed to newspeak
 void printGoodSpeak() {
   printf("Dear Comrade,\n\n");
+  printf("Submitting your text helps to preserve feelings and prevent\n ");
+  printf("badthink. Some of the words that you used are not goodspeek.\n ");
+  printf("The list shows how to turn oldspeak words into newspeak.\n\n");
 }
 
+
+
+// prints words that are banned or need to be changed
+// prints a letter to user
+void printResults(hTable *bannedWords, hTable *wordsToChange)
+{
+  // check if they had any banned words
+  if (isEmpty(bannedWords) != 1)
+  {
+    // there are banned words -> joycamp!
+    printThoughtCrimes();
+    printOldSpeak(bannedWords);
+    printf("\n\nThink on these words during your vacation!\n\n");
+  }
+
+  if (isEmpty(wordsToChange) != 1)
+  {
+    if (isEmpty(bannedWords) == 1)
+    {
+      // we only want to display the gentle reminder letter
+      // if the user is not going to joy camp
+      printGoodSpeak();
+    }
+    printTable(wordsToChange);
+  }
+}
 
 // prints out statistics about text
 void printStatistics() {
@@ -126,7 +243,7 @@ void printStatistics() {
 int main(int argc, char *argv[]) {
 
   //----------------------
-  // 1) DECLARE VARIABLES
+  // 1) DECLARE VARIABLES |
   //----------------------
   
   // parameters
@@ -138,48 +255,53 @@ int main(int argc, char *argv[]) {
   // set up salts for filter 1, filter 2, and hash table
   uint32_t salt1[] = {0xDeadD00d, 0xFadedBee, 0xBadAb0de, 0xC0c0aB0a};
   uint32_t salt2[] = {0xDeadBeef, 0xFadedB0a, 0xCafeD00d, 0xC0c0aB0a};
-  //uint32_t saltH[] = {0xDeadD00d, 0xFadedBee, 0xBadAb0de, 0xC0c0Babe};
+  uint32_t saltH[] = {0xDeadD00d, 0xFadedBee, 0xBadAb0de, 0xC0c0Babe};
 
+  // bloom filters and hash tables
   bloomF *filter1;
   bloomF *filter2;
+  hTable *table;
 
-
+  // list of violations
+  hTable *wordsToChange; // words that should be newspeak
+  hTable *bannedWords; // words that are just straight up banned
+  wordsToChange = createNewTable(hashSize, saltH, moveToFront);
+  bannedWords = createNewTable(hashSize, saltH, moveToFront);
+  
   //---------------------------------------
-  // 2) get instructions from command line
+  // 2) get instructions from command line |
   //---------------------------------------
   parseArguments(argc, argv, &printLetter, &hashSize,
 		 &bloomSize, &moveToFront);
 
-  //------------------------
-  // 3) set up bloom filter
-  //------------------------
-  filter1 = newFilter(hashSize, salt1);
-  filter2 = newFilter(hashSize, salt2);
-  setUpFilters(filter1, filter2, "badspeak.txt");
-
-  printFilter(filter1);
-  printf("\n\n");
-  printFilter(filter2);
-
-  //----------------------
-  // 4) set up hash table
-  //----------------------
+  //-------------------------
+  // 3) set up bloom filters |
+  //-------------------------
+  filter1 = newFilter(bloomSize, salt1);
+  filter2 = newFilter(bloomSize, salt2);
+ 
+  // hash the filters
+  setUpBadSpeakFilters(filter1, filter2);
+  setUpNewSpeakFilters(filter1, filter2);
 
   //----------------------
-  // 5) get user string
+  // 4) set up hash table |
   //----------------------
+  table = createNewTable(hashSize, saltH, moveToFront);
+  setUpTable(table); // hash it with oldspeak newspeak
 
-  printStandardIn();
-
-  // 6) go through string word by word, checking filter/hash
-  //    save flagged words to two different 
-
+  
+  //----------------------------
+  // 5) open up input, check it |
+  //----------------------------
+  checkInput(filter1, filter2, table, bannedWords, wordsToChange);
 
   //------------------
-  // 7) print results
+  // 6) print results |
   //------------------
+  printResults(bannedWords, wordsToChange);
+
   /*
-  //---print results---
   if (printLetter == 1)
   {
     printThoughtCrimes();
@@ -189,9 +311,15 @@ int main(int argc, char *argv[]) {
     printStatistics();
   }
   */
-  //---exit program---
+
+  //-------------------------------------
+  // Exit Program
+  //-------------------------------------
   deleteFilter(filter1);
   deleteFilter(filter2);
+  deleteTable(table);
+  deleteTable(wordsToChange);
+  deleteTable(bannedWords);
   printf("\n");
   return 0;
 }
