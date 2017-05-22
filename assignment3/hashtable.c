@@ -56,7 +56,7 @@ void addWordToTable(hTable *table, char *old, char *new)
   uint32_t index = getHashedIndex(table, old);
   if (table->words[index] == NULL)
   {
-    table->words[index] = newNode(old, new); 
+    table->words[index] = newNode(old, new); // !!!!!!
   }
   else
   {
@@ -89,8 +89,8 @@ int checkTableMembership(hTable *table, char *text)
 {
   uint32_t index = getHashedIndex(table, text);
   //printf("INDEX OF %s: %d\n", text, index);
-  listNode *found = findLL(table->words[index], text,
-			   table->numSeeks, table->findLLCalls);
+  listNode *found = findLL(&(table->words[index]), text, table->numSeeks,
+			   table->findLLCalls, table->moveToFront);
   
   if (found == NULL)
   {
@@ -105,8 +105,8 @@ int checkTableMembership(hTable *table, char *text)
 char *getNewSpeak(hTable *table, char *text)
 {
   uint32_t index = getHashedIndex(table, text);
-  listNode *found = findLL(table->words[index], text,
-			   table->numSeeks, table->findLLCalls);
+  listNode *found = findLL(&(table->words[index]), text,table->numSeeks,
+			   table->findLLCalls, table->moveToFront);
 
   if (found != NULL)
   {

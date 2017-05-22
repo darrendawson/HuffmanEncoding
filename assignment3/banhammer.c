@@ -11,6 +11,7 @@
 # include <getopt.h>
 # include <stdint.h>
 # include <float.h>
+# include <ctype.h>
 
 # include "aes.h"
 # include "hash.h"
@@ -67,6 +68,7 @@ void setUpBadSpeakFilters(bloomF *filter1, bloomF *filter2, int *dict)
   if (fp != NULL)
   {
     while ((read = getline(&line, &len, fp)) != -1) {
+      line[strlen(line) - 1] = 0;
       setBit(filter1, line);
       setBit(filter2, line);
       (*dict)++; // for stats
@@ -91,6 +93,7 @@ void setUpNewSpeakFilters(bloomF *filter1, bloomF *filter2, int *trans)
   if (fp != NULL)
   {
     while ((read = getline(&line, &len, fp)) != -1) {
+      line[strlen(line) - 1] = 0;
       sscanf(line, "%s", oldspeak);
       setBit(filter1, oldspeak);
       setBit(filter2, oldspeak);
@@ -129,13 +132,35 @@ void setUpTable(hTable *table)
   free(line);
 }
 
+// sets up a banned table
+void setUpBannedTable(hTable *table)
+{
+  FILE *fp;
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+  
+  fp = fopen("badspeak.txt", "r");
+  if (fp != NULL)
+  {
+    while ((read = getline(&line, &len, fp)) != -1) {
+      line[strlen(line) - 1] = 0;
+      addWordToTable(table, line, "FUCKK");
+      }
+  }
+
+  fclose(fp);  
+  free(line);
+}
+
 //---checkInput----------------------------------------------------------
 
 // opens a text file from standard in
 // checks each word against bloom filters and hashtable to find problems
 // compiles lists of words that are (banned) or (should be changed)
 void checkInput(bloomF *filter1, bloomF *filter2, hTable *table,
-		hTable *bannedWords, hTable *wordsToChange, int *text)
+		hTable *bannedWords, hTable *wordsToChange,
+		hTable *tableOfBannedWords, int *text)
 {
   char *line = NULL;
   size_t len = 0;
@@ -152,6 +177,12 @@ void checkInput(bloomF *filter1, bloomF *filter2, hTable *table,
     while (word != NULL)
     {
       (*text) += 1; // for stats
+      word[strlen(word) - 1] = 0;
+
+      // lower case the word
+      for (int i = 0; word[i]; i++){
+	word[i] = tolower(word[i]);
+      }
       
       // only check a word if it's in the bloom filters
       if (checkMembership(filter1, word) == 1 ||
@@ -166,8 +197,12 @@ void checkInput(bloomF *filter1, bloomF *filter2, hTable *table,
 	  if (checkTableMembership(wordsToChange, word) == 0)
 	  {
 	    // add to wordsToChange
+	    //char *newspeak = getNewSpeak(tableOfBannedWords, word);
 	    char *newspeak = getNewSpeak(table, word);
-	    addWordToTable(wordsToChange, word, newspeak);
+	    if (newspeak != NULL)
+	    {
+	      addWordToTable(wordsToChange, word, newspeak); // !!!!
+	    }
 	  }
 	}
 	else
@@ -175,9 +210,12 @@ void checkInput(bloomF *filter1, bloomF *filter2, hTable *table,
 	  // if not in table, then the word is a complete violation
 	  //bannedWords[i] = word;
 	  //printf("%s is BANNED\n", word);
-	  if (checkTableMembership(bannedWords, word) == 0)
+	  if (checkTableMembership(tableOfBannedWords, word) == 1)
 	  {
-	    addWordToTable(bannedWords, word, "");
+	    if (checkTableMembership(bannedWords, word) == 0)
+	    {
+	      addWordToTable(bannedWords, word, "");
+	    }
 	  }
 	}
 
@@ -285,6 +323,7 @@ int main(int argc, char *argv[]) {
   bloomF *filter1;
   bloomF *filter2;
   hTable *table;
+  hTable *tableOfBannedWords;
 
   // list of violations
   hTable *wordsToChange; // words that should be newspeak
@@ -312,13 +351,16 @@ int main(int argc, char *argv[]) {
   // 4) set up hash table |
   //----------------------
   table = createNewTable(hashSize, saltH, moveToFront);
+  tableOfBannedWords = createNewTable(hashSize, saltH, moveToFront);
   setUpTable(table); // hash it with oldspeak newspeak
+  setUpBannedTable(tableOfBannedWords); // hash it with badspeak.txt
 
-  
+
   //----------------------------
   // 5) open up input, check it |
   //----------------------------
-  checkInput(filter1, filter2, table, bannedWords, wordsToChange, &text);
+  checkInput(filter1, filter2, table, bannedWords, wordsToChange,
+	     tableOfBannedWords, &text);
   
   //------------------
   // 6) print results |
@@ -354,6 +396,7 @@ int main(int argc, char *argv[]) {
   deleteTable(table);
   deleteTable(wordsToChange);
   deleteTable(bannedWords);
+  deleteTable(tableOfBannedWords);
   printf("\n");
   return 0;
 }

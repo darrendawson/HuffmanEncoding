@@ -31,7 +31,7 @@ void delLL(listNode *);
 listNode *insertLL(listNode *, char *, char *);
 
 // searches a Linked List for a word and returns that node
-listNode *findLL(listNode *, char *, int *, int *);
+listNode *findLL(listNode **, char *, int *, int *, int);
 
 // prints out a list
 void printLL(listNode *, int *);

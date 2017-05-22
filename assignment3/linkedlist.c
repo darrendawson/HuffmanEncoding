@@ -11,7 +11,7 @@ listNode *newNode(char *old, char *new)
 
   // assign old and new
   strcpy(newNode->oldspeak, old);
-  strcpy(newNode->newspeak, new);
+  strcpy(newNode->newspeak, new); // !!!!!!!!!!!!!
   
   newNode->next = NULL;
 
@@ -67,9 +67,11 @@ listNode *insertLL(listNode *list, char *old, char *new)
 //---findLL--------------------------------------------------------------
 
 // returns node that contains key
-listNode *findLL(listNode *list, char *key, int *seek, int *findLLCount)
+listNode *findLL(listNode **list, char *key, int *seek,
+		 int *findLLCount, int moveToFront)
 { 
-  listNode *tempList = list;
+  listNode *tempList = *list;
+  listNode *previousNode;
   
   if (tempList != NULL)
   {
@@ -82,7 +84,9 @@ listNode *findLL(listNode *list, char *key, int *seek, int *findLLCount)
       return tempList;
     }
 
-    // checks in case of multi node linked list
+    previousNode = tempList;
+
+    // checks in case there are multiplel nodes in linked list
     while (tempList->next != NULL)
     {
       (*seek)++;
@@ -90,11 +94,24 @@ listNode *findLL(listNode *list, char *key, int *seek, int *findLLCount)
       // if key = oldspeak, we've found it!
       if (strcmp(tempList->oldspeak, key) == 0)
       {
-	return tempList;
+	// check if we need to use move to front
+	if (moveToFront == 1)
+	{
+	  insertLL(*list, tempList->oldspeak, tempList->newspeak);
+
+	  // link to next node
+	  previousNode->next = tempList->next;
+	  delNode(tempList);
+	  
+	  return *list;
+	}
       }
+      previousNode = tempList;
       tempList = tempList->next;
+
     }
   }
+  
   return NULL; // else, it doesn't exist
 }
 
