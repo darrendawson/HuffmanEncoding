@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99
-OBJECTS = encoder.o 
+OBJECTS = encoder.o bitvector.o
 
 .PHONY: all
 all: encoder
@@ -10,6 +10,9 @@ encoder: $(OBJECTS)
 
 encoder.o: encoder.c
 	$(CC) $(CFLAGS) -c encoder.c
+
+bitvector.o: bitvector.c
+	$(CC) $(CFLAGS) -c bitvector.c
 
 
 .PHONY: clean

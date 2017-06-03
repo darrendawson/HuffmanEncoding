@@ -101,6 +101,7 @@ void printHistogram(int *histogram)
   printf("Total Bytes: %d\n", totalBytes);
   printf("----Histogram\n\n");
 }
+
 //---MAIN----------------------------------------------------------------
 
 int main(int argc, char *argv[])
@@ -133,7 +134,6 @@ int main(int argc, char *argv[])
   // 3) set up histogram
   //----------------------
   setHistogram(histogram, filepath);
-  printHistogram(histogram);
 
 
   // Exit program
