@@ -10,6 +10,9 @@
 # include <stdbool.h>
 # include <stdint.h>
 
+# include "bitvector.h"
+# include "hufftree.h"
+
 //---parseArguments------------------------------------------------------
 
 // Uses command line flags to set up program
@@ -102,6 +105,7 @@ void printHistogram(int *histogram)
   printf("----Histogram\n\n");
 }
 
+//=======================================================================
 //---MAIN----------------------------------------------------------------
 
 int main(int argc, char *argv[])

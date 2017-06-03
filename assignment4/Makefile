@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99
-OBJECTS = encoder.o bitvector.o
+OBJECTS = encoder.o bitvector.o hufftree.o
 
 .PHONY: all
 all: encoder
@@ -13,6 +13,9 @@ encoder.o: encoder.c
 
 bitvector.o: bitvector.c
 	$(CC) $(CFLAGS) -c bitvector.c
+
+hufftree.o: hufftree.c
+	$(CC) $(CFLAGS) -c hufftree.c
 
 
 .PHONY: clean
