@@ -39,6 +39,9 @@ void appendBit(bitV *, bool);
 // add a code to end of vector
 void appendCode(bitV *, bitV *);
 
+// remove last bit of vector (that we care about)
+void removeBitFromEnd(bitV *);
+
 // prints the vector
 void printBitVector(bitV *);
 

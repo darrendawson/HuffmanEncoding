@@ -1,7 +1,7 @@
 /*
   Darren Dawson
   dwdawson@ucsc.edu
-  
+  Huffman Encoder
  */
 
 # include <stdio.h>
@@ -110,6 +110,76 @@ void printHistogram(int *histogram)
   printf("----Histogram\n\n");
 }
 
+//---findNumberOfLeaves--------------------------------------------------
+
+// uses histogram to return the number of leaves tree will have
+int findNumberOfLeaves(int *histogram)
+{
+  int num = 0;
+  for (int i = 0; i < 256; i++)
+  {
+    if (histogram[i] > 0)
+    {
+      num++;
+    }
+  }
+  return num;
+}
+
+//---assignCodes---------------------------------------------------------
+
+// walks huffman tree and assigns huffman codes
+void assignCodes(treeNode *node, bitV **codes, bitV currentCode)
+{ 
+  if (node->leaf)
+  {
+    codes[node->symbol] = newBitVector(8);
+    appendCode(codes[node->symbol], &currentCode);
+    return;
+  }
+  
+  // walk right
+  appendBit(&currentCode, false);
+  assignCodes(node->left, codes, currentCode);
+
+  // walk right
+  removeBitFromEnd(&currentCode); // return to parent
+  appendBit(&currentCode, true);
+  assignCodes(node->right, codes, currentCode);
+  return; // bubble up
+}
+
+//---deleteCodes---------------------------------------------------------
+
+// frees all the bitvectors in codes
+void deleteCodes(bitV **codes)
+{
+  for (uint32_t i = 0; i < 256; i++)
+  {
+    if (codes[i] != NULL)
+    {
+      deleteBitVector(codes[i]);
+    }
+  }
+  free(codes);
+  return;
+}
+
+//---printCodes----------------------------------------------------------
+
+// prints out huff codes
+void printCodes(bitV **huffCodes)
+{
+  for (uint32_t i = 0; i < 255; i++)
+  {
+    if (huffCodes[i] != NULL)
+    {
+      printBitVector(huffCodes[i]);
+    }
+  }
+  return;
+}
+
 //=======================================================================
 //---MAIN----------------------------------------------------------------
 
@@ -120,16 +190,19 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   char *filepath = NULL;
   int histogram[256] = {0};
-  huffPQueue *treeQueue = newHuffPQueue(100);
+  huffPQueue *treeQueue;
 
   treeNode *huffmanTree = NULL;
   treeNode *tempTree = NULL;
-  
+
+  bitV **huffCodes = (bitV**)calloc(256, sizeof(bitV*));
   // ENCODED FILE
   // uint32_t magicNum = 0xdeadd00d;
   // size of original file
   // size of huff tree
-
+  int numLeaves = 0;
+  
+  printf("Step 1 complete\n");
 
   //-------------------------------------------
   // 2) Parse Arguments
@@ -140,15 +213,20 @@ int main(int argc, char *argv[])
   if (filepath == NULL || !checkValidFile(filepath))
   {
     printf("Please input a correct file name to compress\n");
-    deleteHuffPQueue(treeQueue);
+    deleteCodes(huffCodes);
     return 1;
   }
+  printf("Step 2 complete\n");
 
   //--------------------------------------------
   // 3) set up histogram
   //--------------------------------------------
   setHistogram(histogram, filepath);
+  numLeaves = findNumberOfLeaves(histogram);
+  treeQueue = newHuffPQueue(numLeaves + 1); // set proper size
 
+  printf("Step 3 complete\n");
+    
   //--------------------------------------------
   // 4) Use histogram to set up priority queue
   //--------------------------------------------
@@ -160,7 +238,9 @@ int main(int argc, char *argv[])
       enqueueHuffPQueue(treeQueue, node);
     }
   }
-
+  //printHistogram(histogram);
+  printf("Step 4 complete\n");
+  
   //--------------------------------------------
   // 5) Use priority queue to create tree
   //--------------------------------------------
@@ -179,10 +259,26 @@ int main(int argc, char *argv[])
       enqueueHuffPQueue(treeQueue, huffmanTree);
     }
   }
-  printTree(huffmanTree, 2);
-  
+  //printTree(huffmanTree, 2);
+  printf("Step 5 complete\n");
+
+  //---------------------------------------------
+  // 6) Use huffman tree to create bit codes
+  //---------------------------------------------
+  bitV *currentCode = newBitVector(8);
+  assignCodes(huffmanTree, huffCodes, *currentCode);
+
+  //printCodes(huffCodes);
+  printf("Step 6 complete\n");
+ 
+
+  //---------------------------------------------------------------------
   // Exit program
+  //---------------------------------------------------------------------
+  // delete codes
+  deleteCodes(huffCodes);
   deleteTree(huffmanTree);
   deleteHuffPQueue(treeQueue);
+
   return 0;
 }

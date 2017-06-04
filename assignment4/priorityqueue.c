@@ -39,7 +39,7 @@ bool enqueueHuffPQueue(huffPQueue *q, treeNode *tree)
 
   if (fullHuffPQueue(q))
   {
-    printf("\nCAN'T ENQUEUE\n");
+    printf("\nCAN'T ENQUEUE (queue full)\n");
     return false;
   }
 

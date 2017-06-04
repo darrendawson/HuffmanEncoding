@@ -88,14 +88,30 @@ void appendCode(bitV *vector, bitV *code)
   return;
 }
 
+//---removeBitFromEnd----------------------------------------------------
+
+// removes the very last bit we care about
+void removeBitFromEnd(bitV *vector)
+{
+  vector->lastBit -= 1;
+  return;
+}
+
 //---printBitVector------------------------------------------------------
 
 // prints the vector (up to the index we care about)
 void printBitVector(bitV *vector)
 {
-  for (uint32_t i = 0; i <= vector->lastBit; i++)
+  if (vector->lastBit != (uint32_t)-1)
   {
-    printf("%d", getBitValue(vector, i));
+    for (uint32_t i = 0; i <= vector->lastBit && i < vector->size; i++)
+    {
+      printf("%d", getBitValue(vector, i));
+    }
+  }
+  else
+  {
+    printf("Empty");
   }
   printf("\n");
   return;
