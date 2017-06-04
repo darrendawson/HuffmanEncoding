@@ -12,6 +12,7 @@
 
 # include "bitvector.h"
 # include "hufftree.h"
+# include "priorityqueue.h"
 
 //---parseArguments------------------------------------------------------
 
@@ -39,11 +40,15 @@ void parseArguments(int argc, char *argv[], char **filepath)
 bool checkValidFile(char *filepath)
 {
   FILE *file = fopen(filepath, "r");
-  if (file == NULL)
+  bool result = false;
+
+  if (file != NULL)
   {
-    return false;
+    result = true;
   }
-  return true;
+
+  fclose(file);
+  return result;
 }
 
 //---setHistogram--------------------------------------------------------
@@ -110,36 +115,74 @@ void printHistogram(int *histogram)
 
 int main(int argc, char *argv[])
 {
-  //-----------------------
+  //-------------------------------------------
   // 1) Declare Variables
-  //-----------------------
+  //-------------------------------------------
   char *filepath = NULL;
   int histogram[256] = {0};
+  huffPQueue *treeQueue = newHuffPQueue(100);
 
+  treeNode *huffmanTree = NULL;
+  treeNode *tempTree = NULL;
+  
   // ENCODED FILE
   // uint32_t magicNum = 0xdeadd00d;
   // size of original file
   // size of huff tree
 
 
-  //---------------------
+  //-------------------------------------------
   // 2) Parse Arguments
-  //---------------------
+  //-------------------------------------------
   parseArguments(argc, argv, &filepath);
 
   // make sure there is a filepath - if not, exit program
   if (filepath == NULL || !checkValidFile(filepath))
   {
     printf("Please input a correct file name to compress\n");
+    deleteHuffPQueue(treeQueue);
     return 1;
   }
 
-  //----------------------
+  //--------------------------------------------
   // 3) set up histogram
-  //----------------------
+  //--------------------------------------------
   setHistogram(histogram, filepath);
 
+  //--------------------------------------------
+  // 4) Use histogram to set up priority queue
+  //--------------------------------------------
+  for (uint32_t i = 0; i < 256; i++)
+  {
+    if (histogram[i] >= 1)
+    {
+      treeNode *node = newNode(i, true, histogram[i]);
+      enqueueHuffPQueue(treeQueue, node);
+    }
+  }
 
+  //--------------------------------------------
+  // 5) Use priority queue to create tree
+  //--------------------------------------------
+
+  // pop off top two items in queue
+  // join them together and push them back into queue
+  // if tree is empty, you've found root
+  while (!emptyHuffPQueue(treeQueue))
+  {
+    huffmanTree = dequeueHuffPQueue(treeQueue);
+
+    if (!emptyHuffPQueue(treeQueue))
+    {
+      tempTree = dequeueHuffPQueue(treeQueue);
+      huffmanTree = join(huffmanTree, tempTree);
+      enqueueHuffPQueue(treeQueue, huffmanTree);
+    }
+  }
+  printTree(huffmanTree, 2);
+  
   // Exit program
+  deleteTree(huffmanTree);
+  deleteHuffPQueue(treeQueue);
   return 0;
 }

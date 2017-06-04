@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99
-OBJECTS = encoder.o bitvector.o hufftree.o
+CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99 -g
+OBJECTS = encoder.o bitvector.o hufftree.o priorityqueue.o
 
 .PHONY: all
 all: encoder
@@ -16,6 +16,9 @@ bitvector.o: bitvector.c
 
 hufftree.o: hufftree.c
 	$(CC) $(CFLAGS) -c hufftree.c
+
+priorityqueue.o: priorityqueue.c
+	$(CC) $(CFLAGS) -c priorityqueue.c
 
 
 .PHONY: clean
