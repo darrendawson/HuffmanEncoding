@@ -180,6 +180,41 @@ void printCodes(bitV **huffCodes)
   return;
 }
 
+//---encodeFile----------------------------------------------------------
+
+// reads a file and converts each byte into its respective code
+// dumps those codes into a bitvector
+void encodeFile(bitV *encodedFile, bitV **codes, char *filepath)
+{
+  FILE *file;
+  long fileSize;
+  char *buffer;
+  uint8_t currentByte;
+  
+  // open file
+  file = fopen(filepath, "r");
+
+  // get size of file
+  fseek(file, 0, SEEK_END);
+  fileSize = ftell(file);
+  rewind(file);
+
+  // allocate memory and read file
+  buffer = (char*)calloc(1, sizeof(char)*fileSize);
+  fread(buffer, 1, fileSize, file);
+
+  // set histogram
+  for (int i = 0; i < fileSize; i++)
+  {
+    currentByte = (uint8_t)buffer[i];
+    appendCode(encodedFile, codes[currentByte]);
+  }
+
+  fclose(file);
+  free(buffer);
+  return;
+}
+
 //=======================================================================
 //---MAIN----------------------------------------------------------------
 
@@ -196,6 +231,8 @@ int main(int argc, char *argv[])
   treeNode *tempTree = NULL;
 
   bitV **huffCodes = (bitV**)calloc(256, sizeof(bitV*));
+  bitV *currentCode = newBitVector(8); // use in step 6
+  bitV *encodedFile = newBitVector(10000);
   // ENCODED FILE
   // uint32_t magicNum = 0xdeadd00d;
   // size of original file
@@ -213,23 +250,24 @@ int main(int argc, char *argv[])
   if (filepath == NULL || !checkValidFile(filepath))
   {
     printf("Please input a correct file name to compress\n");
+    deleteBitVector(currentCode);
     deleteCodes(huffCodes);
     return 1;
   }
   printf("Step 2 complete\n");
 
-  //--------------------------------------------
+  //-------------------------------------------
   // 3) set up histogram
-  //--------------------------------------------
+  //-------------------------------------------
   setHistogram(histogram, filepath);
   numLeaves = findNumberOfLeaves(histogram);
   treeQueue = newHuffPQueue(numLeaves + 1); // set proper size
 
   printf("Step 3 complete\n");
     
-  //--------------------------------------------
+  //-------------------------------------------
   // 4) Use histogram to set up priority queue
-  //--------------------------------------------
+  //-------------------------------------------
   for (uint32_t i = 0; i < 256; i++)
   {
     if (histogram[i] >= 1)
@@ -241,19 +279,19 @@ int main(int argc, char *argv[])
   //printHistogram(histogram);
   printf("Step 4 complete\n");
   
-  //--------------------------------------------
+  //-------------------------------------------
   // 5) Use priority queue to create tree
-  //--------------------------------------------
-
+  //-------------------------------------------
   // pop off top two items in queue
   // join them together and push them back into queue
   // if tree is empty, you've found root
   while (!emptyHuffPQueue(treeQueue))
   {
-    huffmanTree = dequeueHuffPQueue(treeQueue);
+    huffmanTree = dequeueHuffPQueue(treeQueue); // get first treeNode
 
     if (!emptyHuffPQueue(treeQueue))
     {
+      // join the 2 nodes together and push it back into queue
       tempTree = dequeueHuffPQueue(treeQueue);
       huffmanTree = join(huffmanTree, tempTree);
       enqueueHuffPQueue(treeQueue, huffmanTree);
@@ -262,20 +300,26 @@ int main(int argc, char *argv[])
   //printTree(huffmanTree, 2);
   printf("Step 5 complete\n");
 
-  //---------------------------------------------
+  //-------------------------------------------
   // 6) Use huffman tree to create bit codes
-  //---------------------------------------------
-  bitV *currentCode = newBitVector(8);
+  //-------------------------------------------
   assignCodes(huffmanTree, huffCodes, *currentCode);
-
+  deleteBitVector(currentCode);
   //printCodes(huffCodes);
   printf("Step 6 complete\n");
- 
+
+
+  //-------------------------------------------
+  // 7) Encode the file
+  //-------------------------------------------
+  appendCode(encodedFile, magicNumber);
+  encodeFile(encodedFile, huffCodes, filepath);
 
   //---------------------------------------------------------------------
   // Exit program
   //---------------------------------------------------------------------
   // delete codes
+  deleteBitVector(encodedFile);
   deleteCodes(huffCodes);
   deleteTree(huffmanTree);
   deleteHuffPQueue(treeQueue);
