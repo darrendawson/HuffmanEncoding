@@ -88,6 +88,26 @@ void appendCode(bitV *vector, bitV *code)
   return;
 }
 
+//---appendUInt32--------------------------------------------------------
+
+// adds an int to the end of  a bit vector
+void appendUInt32(bitV *vector, uint32_t bits)
+{
+  for (int i = 31; i >= 0; i--)
+  {
+    // if bit at i in int is set to 1 -> appendBit(true)
+    if (bits & (1 << i))
+    {
+      appendBit(vector, true);
+    }
+    else
+    {
+      appendBit(vector, false);
+    }
+  }
+  return;
+}
+
 //---removeBitFromEnd----------------------------------------------------
 
 // removes the very last bit we care about

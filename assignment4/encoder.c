@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
   bitV *currentCode = newBitVector(8); // use in step 6
   bitV *encodedFile = newBitVector(10000);
   // ENCODED FILE
-  // uint32_t magicNum = 0xdeadd00d;
+  uint32_t magicNumber = 0xdeadd00d;
   // size of original file
   // size of huff tree
   int numLeaves = 0;
@@ -312,7 +312,9 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   // 7) Encode the file
   //-------------------------------------------
-  appendCode(encodedFile, magicNumber);
+  printf("Magic Num: ");
+  appendUInt32(encodedFile, magicNumber);
+  printBitVector(encodedFile);
   encodeFile(encodedFile, huffCodes, filepath);
 
   //---------------------------------------------------------------------
