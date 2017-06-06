@@ -9,6 +9,7 @@
 # include <getopt.h>
 # include <stdbool.h>
 # include <stdint.h>
+# include <math.h>
 
 # include "bitvector.h"
 # include "hufftree.h"
@@ -264,6 +265,56 @@ void dumpBitVectorToFile(bitV *vector, char *destination)
   return;
 }
 
+//---findSpread----------------------------------------------------------
+
+// uses histogram to find and print average/sd of byte frequencies
+void findSpread(int *histogram)
+{
+  float average = 0;
+  float sum = 0;
+  float sd = 0;
+  uint8_t mostCommonByte = 0;
+  int mostCommonFrequency = 0;
+  float numBytes = 0;
+
+  // find sum, most common bytes
+  for (uint32_t i = 0; i < 256; i++)
+  {
+    if (histogram[i] != 0)
+    {
+      numBytes++;
+      sum += histogram[i];
+
+      if (histogram[i] > mostCommonFrequency)
+      {
+	mostCommonFrequency = histogram[i];
+	mostCommonByte = i;
+      }
+    }
+  }
+
+  // find average
+  average = sum / numBytes;
+
+  // find sd
+  for (uint32_t i = 0; i < 256; i++)
+  {
+    // sd = average distance to average
+    if (histogram[i] != 0)
+    {
+      sd += pow(histogram[i] - average, 2);
+    }
+  }
+  sd = sqrt(sd / numBytes);
+
+  // print statistics
+  printf("Average Byte Frequency: %f\n", average);
+  printf("Standard Deviation of Byte Frequencies: %f\n", sd);
+  printf("Most Common Byte: %u (%c)\n", mostCommonByte, mostCommonByte);
+  printf("Frequency of Most Common Byte: %d\n", mostCommonFrequency);
+  return;
+}
+
 //=======================================================================
 //---MAIN----------------------------------------------------------------
 
@@ -293,7 +344,8 @@ int main(int argc, char *argv[])
   char *encodedTree;
   uint32_t numLeaves = 0;
   float changeInSize = 0;
-  printf("Step 1 complete\n");
+
+  //printf("Step 1 complete\n");
 
   
   //-------------------------------------------
@@ -309,14 +361,14 @@ int main(int argc, char *argv[])
     deleteCodes(huffCodes);
     return 1;
   }
-  printf("Step 2 complete\n");
+  //printf("Step 2 complete\n");
 
   
   //-------------------------------------------
   // 3) set up histogram
   //-------------------------------------------
   setHistogram(histogram, &sizeOfOriginalFile, filepath);
-  printf("Step 4 complete\n");
+  // printf("Step 3 complete\n");
 
   
   //-------------------------------------------
@@ -331,7 +383,7 @@ int main(int argc, char *argv[])
   // determine size of bitvector that contains all encoded bits
   sizeOfEncodedFile = 112 + sizeOfHuffTree + sizeOfOriginalFile * 8;
   encodedFile = newBitVector(sizeOfEncodedFile);
-  printf("Step 4 complete\n");
+  //printf("Step 4 complete\n");
 
   
   //-------------------------------------------
@@ -346,7 +398,7 @@ int main(int argc, char *argv[])
     }
   }
   //printHistogram(histogram);
-  printf("Step 5 complete\n");
+  //printf("Step 5 complete\n");
 
   
   //-------------------------------------------
@@ -368,7 +420,7 @@ int main(int argc, char *argv[])
     }
   }
   //printTree(huffmanTree, 2);
-  printf("Step 6 complete\n");
+  //printf("Step 6 complete\n");
 
   
   //-------------------------------------------
@@ -381,8 +433,9 @@ int main(int argc, char *argv[])
 
   // delete memory we don't need anymore
   deleteBitVector(currentCode);
+  
   deleteTree(huffmanTree); 
-  printf("Step 7 complete\n");
+  //printf("Step 7 complete\n");
 
 
   //-------------------------------------------
@@ -395,7 +448,7 @@ int main(int argc, char *argv[])
   encodeFile(encodedFile, huffCodes, filepath);
   //printBitVector(encodedFile);
 
-  printf("Step 8 complete\n");
+  //printf("Step 8 complete\n");
 
   
   //-------------------------------------------
@@ -409,11 +462,15 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   if (verbose)
   {
+    // get data
     changeInSize = (float)(encodedFile->lastBit/8) / (float)(sizeOfOriginalFile);
+    
+    // print data
     printf("---------------------\nStatistics\n---------------------\n");
     printf("# of bytes of original file: %lu\n", sizeOfOriginalFile);
     printf("# of Bytes of encoded file:  %u\n", encodedFile->lastBit/8);
-    printf("Percent change: %f\n", (1-changeInSize) * 100);
+    printf("Percent change: %f\n-\n", (1-changeInSize) * 100);
+    findSpread(histogram);
     printf("-\nSize of Encoded Tree Instructions: %u\n", sizeOfHuffTree);
     printf("Number of leaves: %u\n", numLeaves);
   }

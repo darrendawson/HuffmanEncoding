@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99 -g
+CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99 -g -lm
 OBJECTS = encode.o bitvector.o hufftree.o priorityqueue.o
 
 .PHONY: all
