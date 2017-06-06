@@ -54,7 +54,8 @@ bool checkValidFile(char *filepath)
 //---setHistogram--------------------------------------------------------
 
 // reads a file and creates a frequency measure for bytes
-void setHistogram(int *histogram, char *filepath)
+// also sets determines number of bytes in file
+void setHistogram(int *histogram, uint64_t *size, char *filepath)
 {
   FILE *file;
   long fileSize;
@@ -67,6 +68,7 @@ void setHistogram(int *histogram, char *filepath)
   // get size of file
   fseek(file, 0, SEEK_END);
   fileSize = ftell(file);
+  (*size) = (uint64_t)fileSize;
   rewind(file);
 
   // allocate memory and read file
@@ -78,6 +80,7 @@ void setHistogram(int *histogram, char *filepath)
   {
     currentByte = (uint8_t)buffer[i];
     histogram[currentByte] += 1;
+    //(*size)++;
   }
   histogram[0] += 1; // make sure there will always be a tree
   histogram[255] += 1; // This was Darrell Long's idea
@@ -232,12 +235,14 @@ int main(int argc, char *argv[])
 
   bitV **huffCodes = (bitV**)calloc(256, sizeof(bitV*));
   bitV *currentCode = newBitVector(8); // use in step 6
-  bitV *encodedFile = newBitVector(10000);
+
   // ENCODED FILE
+  bitV *encodedFile;
+  uint32_t sizeOfEncodedFile;
   uint32_t magicNumber = 0xdeadd00d;
-  // size of original file
-  // size of huff tree
-  int numLeaves = 0;
+  uint64_t sizeOfOriginalFile;
+  uint16_t sizeOfHuffTree;
+  uint32_t numLeaves = 0;
   
   printf("Step 1 complete\n");
 
@@ -259,14 +264,23 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   // 3) set up histogram
   //-------------------------------------------
-  setHistogram(histogram, filepath);
-  numLeaves = findNumberOfLeaves(histogram);
-  treeQueue = newHuffPQueue(numLeaves + 1); // set proper size
+  setHistogram(histogram, &sizeOfOriginalFile, filepath);
+  printf("Step 4 complete\n");
 
-  printf("Step 3 complete\n");
+  //-------------------------------------------
+  // 4) determine sizes for data structures
+  //-------------------------------------------
+  numLeaves = findNumberOfLeaves(histogram);
+  treeQueue = newHuffPQueue(numLeaves + 1); // create queue for tree
+  sizeOfHuffTree = 3 * numLeaves - 1; // find size of tree
+  
+  // size of bitvector = 112 + length of encoded tree + size of original
+  sizeOfEncodedFile = 112 + sizeOfHuffTree + sizeOfOriginalFile * 8;
+  encodedFile = newBitVector(sizeOfEncodedFile);
+  printf("Step 4 complete\n");
     
   //-------------------------------------------
-  // 4) Use histogram to set up priority queue
+  // 5) Use histogram to set up priority queue
   //-------------------------------------------
   for (uint32_t i = 0; i < 256; i++)
   {
@@ -277,10 +291,10 @@ int main(int argc, char *argv[])
     }
   }
   //printHistogram(histogram);
-  printf("Step 4 complete\n");
+  printf("Step 5 complete\n");
   
   //-------------------------------------------
-  // 5) Use priority queue to create tree
+  // 6) Use priority queue to create tree
   //-------------------------------------------
   // pop off top two items in queue
   // join them together and push them back into queue
@@ -298,32 +312,48 @@ int main(int argc, char *argv[])
     }
   }
   //printTree(huffmanTree, 2);
-  printf("Step 5 complete\n");
-
-  //-------------------------------------------
-  // 6) Use huffman tree to create bit codes
-  //-------------------------------------------
-  assignCodes(huffmanTree, huffCodes, *currentCode);
-  deleteBitVector(currentCode);
-  //printCodes(huffCodes);
   printf("Step 6 complete\n");
 
+  //-------------------------------------------
+  // 7) Use huffman tree to create bit codes
+  //-------------------------------------------
+  assignCodes(huffmanTree, huffCodes, *currentCode);
+  //printCodes(huffCodes);
+
+  // delete memory we don't need anymore
+  deleteBitVector(currentCode); // don't need this anymore
+  deleteTree(huffmanTree); 
+  printf("Step 7 complete\n");
+
 
   //-------------------------------------------
-  // 7) Encode the file
+  // 8) Encode the file
   //-------------------------------------------
-  printf("Magic Num: ");
   appendUInt32(encodedFile, magicNumber);
-  printBitVector(encodedFile);
+  appendUInt64(encodedFile, sizeOfOriginalFile);
+  appendUInt16(encodedFile, sizeOfHuffTree);
+  //appendString(encodedFile, encodedTree;)
   encodeFile(encodedFile, huffCodes, filepath);
+  //printBitVector(encodedFile);
 
+  printf("Step 8 complete\n");
+
+
+
+  //-------------------------------------------
+  // Print Statistics
+  //-------------------------------------------
+  printf("---------------------\nStatistics\n---------------------\n");
+  printf("# of bytes of original: %lu\n", sizeOfOriginalFile);
+  printf("# of bytes allotted:    %u\n", encodedFile->size/8);
+  printf("# of Bytes of encoded:  %u\n", encodedFile->lastBit/8);
+  
   //---------------------------------------------------------------------
   // Exit program
   //---------------------------------------------------------------------
   // delete codes
   deleteBitVector(encodedFile);
   deleteCodes(huffCodes);
-  deleteTree(huffmanTree);
   deleteHuffPQueue(treeQueue);
 
   return 0;

@@ -42,6 +42,10 @@ void appendCode(bitV *, bitV *);
 // add an integer's bits to end of vector
 void appendUInt32(bitV *, uint32_t);
 
+void appendUInt64(bitV *, uint64_t);
+
+void appendUInt16(bitV *, uint16_t);
+
 // remove last bit of vector (that we care about)
 void removeBitFromEnd(bitV *);
 

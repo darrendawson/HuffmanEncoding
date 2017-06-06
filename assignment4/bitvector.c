@@ -108,6 +108,46 @@ void appendUInt32(bitV *vector, uint32_t bits)
   return;
 }
 
+//---appendUInt64--------------------------------------------------------
+
+// adds an int to the end of a bit vector
+void appendUInt64(bitV *vector, uint64_t bits)
+{
+  for (int i = 63; i >= 0; i--)
+  {
+    // if bit at i in int is set to 1 -> appendBit(true)
+    if (bits & (1 << i))
+    {
+      appendBit(vector, true);
+    }
+    else
+    {
+      appendBit(vector, false);
+    }
+  }
+  return;
+}
+
+//---appendUInt16--------------------------------------------------------
+
+// adds an int to the end of  a bit vector
+void appendUInt16(bitV *vector, uint16_t bits)
+{
+  for (int i = 15; i >= 0; i--)
+  {
+    // if bit at i in int is set to 1 -> appendBit(true)
+    if (bits & (1 << i))
+    {
+      appendBit(vector, true);
+    }
+    else
+    {
+      appendBit(vector, false);
+    }
+  }
+  return;
+}
+
 //---removeBitFromEnd----------------------------------------------------
 
 // removes the very last bit we care about
