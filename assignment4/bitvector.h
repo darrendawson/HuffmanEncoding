@@ -33,6 +33,9 @@ void clearBit(bitV *, uint32_t);
 // get value of bit
 bool getBitValue(bitV *, uint32_t);
 
+// get byte
+uint8_t getByteValue(bitV *, uint32_t);
+
 // add bit to end of vector
 void appendBit(bitV *, bool);
 

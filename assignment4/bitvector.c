@@ -58,6 +58,14 @@ bool getBitValue(bitV *vector, uint32_t index)
   return false;
 }
 
+//---getByteValue--------------------------------------------------------
+
+// returns byte at certain index
+uint8_t getByteValue(bitV *vector, uint32_t index)
+{
+  return (vector->bits)[index];
+}
+
 //---appendBit-----------------------------------------------------------
 
 // attach a bit to end of vector, increment lastBit

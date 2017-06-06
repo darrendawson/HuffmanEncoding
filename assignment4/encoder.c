@@ -224,6 +224,42 @@ void encodeFile(bitV *encodedFile, bitV **codes, char *filepath)
   return;
 }
 
+//---dumpBitVectorToFile-------------------------------------------------
+
+// convert a bit vector into the encoded file
+void dumpBitVectorToFile(bitV *vector, char *destination)
+{
+  FILE *file;
+  uint8_t currentByte;
+  printf("Destination: %s\n", destination);
+
+  if (destination == NULL)
+  {
+    // print to standard out
+    printBitVector(vector);
+  }
+  else
+  {
+    // write it to a file
+    
+    // open file
+    file = fopen(destination, "w");
+
+    // write each byte
+    for (uint32_t i = 0; i < (vector->lastBit)/8; i++)
+    {
+      //printf("%u\n", getByteValue(vector, i));
+      currentByte = getByteValue(vector, i);
+      fwrite(&currentByte, 1, sizeof(uint8_t), file);
+    }
+    
+    fclose(file);
+  }
+  
+  
+  return;
+}
+
 //=======================================================================
 //---MAIN----------------------------------------------------------------
 
@@ -254,6 +290,7 @@ int main(int argc, char *argv[])
   
   printf("Step 1 complete\n");
 
+  
   //-------------------------------------------
   // 2) Parse Arguments
   //-------------------------------------------
@@ -269,12 +306,14 @@ int main(int argc, char *argv[])
   }
   printf("Step 2 complete\n");
 
+  
   //-------------------------------------------
   // 3) set up histogram
   //-------------------------------------------
   setHistogram(histogram, &sizeOfOriginalFile, filepath);
   printf("Step 4 complete\n");
 
+  
   //-------------------------------------------
   // 4) determine sizes for data structures
   //-------------------------------------------
@@ -288,7 +327,8 @@ int main(int argc, char *argv[])
   sizeOfEncodedFile = 112 + sizeOfHuffTree + sizeOfOriginalFile * 8;
   encodedFile = newBitVector(sizeOfEncodedFile);
   printf("Step 4 complete\n");
-    
+
+  
   //-------------------------------------------
   // 5) Use histogram to set up priority queue
   //-------------------------------------------
@@ -302,6 +342,7 @@ int main(int argc, char *argv[])
   }
   //printHistogram(histogram);
   printf("Step 5 complete\n");
+
   
   //-------------------------------------------
   // 6) Use priority queue to create tree
@@ -324,17 +365,17 @@ int main(int argc, char *argv[])
   //printTree(huffmanTree, 2);
   printf("Step 6 complete\n");
 
+  
   //-------------------------------------------
   // 7) Use huffman tree to create bit codes
   //-------------------------------------------
   assignCodes(huffmanTree, huffCodes, *currentCode);
-  //printCodes(huffCodes);
 
   // encode the tree (instructions to recreate it)
   generateTreeInstructions(huffmanTree, encodedTree);
 
   // delete memory we don't need anymore
-  deleteBitVector(currentCode); // don't need this anymore
+  deleteBitVector(currentCode);
   deleteTree(huffmanTree); 
   printf("Step 7 complete\n");
 
@@ -351,10 +392,11 @@ int main(int argc, char *argv[])
 
   printf("Step 8 complete\n");
 
+  
   //-------------------------------------------
   // 9) Dump bit vector into encoded File
   //-------------------------------------------
-  
+  dumpBitVectorToFile(encodedFile, destination);
 
 
   //-------------------------------------------
