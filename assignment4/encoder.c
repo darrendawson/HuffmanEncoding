@@ -17,19 +17,24 @@
 //---parseArguments------------------------------------------------------
 
 // Uses command line flags to set up program
-void parseArguments(int argc, char *argv[], char **filepath)
+void parseArguments(int argc, char *argv[],
+		    char **filepath, char **destination)
 {
   char arg; // use to hold argument
 
-  while ((arg = getopt(argc, argv, "i:")) != -1)
+  while ((arg = getopt(argc, argv, "i:o:")) != -1)
   {
     switch (arg)
     {
       case 'i': // suppress letter from censor, print statistics
         *filepath = (char*)optarg;
-	break;	 
+	break;
+      case 'o':
+	*destination = (char*)optarg;
+	break;
     }
   }
+  return;
 }
 
 //---checkValidFile------------------------------------------------------
@@ -45,9 +50,9 @@ bool checkValidFile(char *filepath)
   if (file != NULL)
   {
     result = true;
+    fclose(file);
   }
 
-  fclose(file);
   return result;
 }
 
@@ -111,6 +116,7 @@ void printHistogram(int *histogram)
   printf("Unique Bytes: %d\n", uniqueBytes);
   printf("Total Bytes: %d\n", totalBytes);
   printf("----Histogram\n\n");
+  return;
 }
 
 //---findNumberOfLeaves--------------------------------------------------
@@ -226,7 +232,8 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   // 1) Declare Variables
   //-------------------------------------------
-  char *filepath = NULL;
+  char *filepath = NULL; // file to open and encode
+  char *destination = NULL; // output file name
   int histogram[256] = {0};
   huffPQueue *treeQueue;
 
@@ -242,6 +249,7 @@ int main(int argc, char *argv[])
   uint32_t magicNumber = 0xdeadd00d;
   uint64_t sizeOfOriginalFile;
   uint16_t sizeOfHuffTree;
+  char *encodedTree;
   uint32_t numLeaves = 0;
   
   printf("Step 1 complete\n");
@@ -249,7 +257,7 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   // 2) Parse Arguments
   //-------------------------------------------
-  parseArguments(argc, argv, &filepath);
+  parseArguments(argc, argv, &filepath, &destination);
 
   // make sure there is a filepath - if not, exit program
   if (filepath == NULL || !checkValidFile(filepath))
@@ -270,11 +278,13 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   // 4) determine sizes for data structures
   //-------------------------------------------
+  // determine size of tree
   numLeaves = findNumberOfLeaves(histogram);
   treeQueue = newHuffPQueue(numLeaves + 1); // create queue for tree
   sizeOfHuffTree = 3 * numLeaves - 1; // find size of tree
+  encodedTree = (char*)calloc(sizeOfHuffTree, sizeof(char));
   
-  // size of bitvector = 112 + length of encoded tree + size of original
+  // determine size of bitvector that contains all encoded bits
   sizeOfEncodedFile = 112 + sizeOfHuffTree + sizeOfOriginalFile * 8;
   encodedFile = newBitVector(sizeOfEncodedFile);
   printf("Step 4 complete\n");
@@ -320,6 +330,9 @@ int main(int argc, char *argv[])
   assignCodes(huffmanTree, huffCodes, *currentCode);
   //printCodes(huffCodes);
 
+  // encode the tree (instructions to recreate it)
+  generateTreeInstructions(huffmanTree, encodedTree);
+
   // delete memory we don't need anymore
   deleteBitVector(currentCode); // don't need this anymore
   deleteTree(huffmanTree); 
@@ -332,12 +345,16 @@ int main(int argc, char *argv[])
   appendUInt32(encodedFile, magicNumber);
   appendUInt64(encodedFile, sizeOfOriginalFile);
   appendUInt16(encodedFile, sizeOfHuffTree);
-  //appendString(encodedFile, encodedTree;)
+  appendString(encodedFile, encodedTree, sizeOfHuffTree);
   encodeFile(encodedFile, huffCodes, filepath);
   //printBitVector(encodedFile);
 
   printf("Step 8 complete\n");
 
+  //-------------------------------------------
+  // 9) Dump bit vector into encoded File
+  //-------------------------------------------
+  
 
 
   //-------------------------------------------
@@ -352,6 +369,7 @@ int main(int argc, char *argv[])
   // Exit program
   //---------------------------------------------------------------------
   // delete codes
+  free(encodedTree);
   deleteBitVector(encodedFile);
   deleteCodes(huffCodes);
   deleteHuffPQueue(treeQueue);

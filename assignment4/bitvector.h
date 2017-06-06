@@ -46,6 +46,8 @@ void appendUInt64(bitV *, uint64_t);
 
 void appendUInt16(bitV *, uint16_t);
 
+void appendString(bitV *, char *, uint32_t);
+
 // remove last bit of vector (that we care about)
 void removeBitFromEnd(bitV *);
 

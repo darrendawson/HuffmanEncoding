@@ -148,6 +148,34 @@ void appendUInt16(bitV *vector, uint16_t bits)
   return;
 }
 
+//---appendString--------------------------------------------------------
+
+// adds a string's bits to the end of bit vector
+void appendString(bitV *vector, char *string, uint32_t size)
+{
+  uint8_t currentByte;
+
+  // go through byte by byte
+  for (uint32_t i = 0; i < size/8; i++)
+  {
+    currentByte = string[i];
+
+    // add bits
+    for (uint32_t i = 0; i < 8; i++)
+    {
+      if (currentByte & (1 << i))
+      {
+	appendBit(vector, true);
+      }
+      else
+      {
+	appendBit(vector, false);
+      }
+    }
+  }
+  return;
+}
+
 //---removeBitFromEnd----------------------------------------------------
 
 // removes the very last bit we care about
