@@ -18,20 +18,24 @@
 
 // Uses command line flags to set up program
 void parseArguments(int argc, char *argv[],
-		    char **filepath, char **destination)
+		    char **filepath, char **destination, bool *verbose)
 {
   char arg; // use to hold argument
 
-  while ((arg = getopt(argc, argv, "i:o:")) != -1)
+  while ((arg = getopt(argc, argv, "i:o:v")) != -1)
   {
     switch (arg)
     {
-      case 'i': // suppress letter from censor, print statistics
+      case 'i': // input file
         *filepath = (char*)optarg;
 	break;
-      case 'o':
+      case 'o': // output destination
 	*destination = (char*)optarg;
 	break;
+      case 'v': // verbose mode
+	*verbose = true;
+	break;
+	
     }
   }
   return;
@@ -270,6 +274,7 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   char *filepath = NULL; // file to open and encode
   char *destination = NULL; // output file name
+  bool verbose = false;
   int histogram[256] = {0};
   huffPQueue *treeQueue;
 
@@ -287,14 +292,14 @@ int main(int argc, char *argv[])
   uint16_t sizeOfHuffTree;
   char *encodedTree;
   uint32_t numLeaves = 0;
-  
+  float changeInSize = 0;
   printf("Step 1 complete\n");
 
   
   //-------------------------------------------
   // 2) Parse Arguments
   //-------------------------------------------
-  parseArguments(argc, argv, &filepath, &destination);
+  parseArguments(argc, argv, &filepath, &destination, &verbose);
 
   // make sure there is a filepath - if not, exit program
   if (filepath == NULL || !checkValidFile(filepath))
@@ -402,11 +407,16 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   // Print Statistics
   //-------------------------------------------
-  printf("---------------------\nStatistics\n---------------------\n");
-  printf("# of bytes of original: %lu\n", sizeOfOriginalFile);
-  printf("# of bytes allotted:    %u\n", encodedFile->size/8);
-  printf("# of Bytes of encoded:  %u\n", encodedFile->lastBit/8);
-  
+  if (verbose)
+  {
+    changeInSize = (float)(encodedFile->lastBit/8) / (float)(sizeOfOriginalFile);
+    printf("---------------------\nStatistics\n---------------------\n");
+    printf("# of bytes of original file: %lu\n", sizeOfOriginalFile);
+    printf("# of Bytes of encoded file:  %u\n", encodedFile->lastBit/8);
+    printf("Percent change: %f\n", (1-changeInSize) * 100);
+    printf("-\nSize of Encoded Tree Instructions: %u\n", sizeOfHuffTree);
+    printf("Number of leaves: %u\n", numLeaves);
+  }
   //---------------------------------------------------------------------
   // Exit program
   //---------------------------------------------------------------------

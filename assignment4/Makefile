@@ -1,15 +1,15 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c99 -g
-OBJECTS = encoder.o bitvector.o hufftree.o priorityqueue.o
+OBJECTS = encode.o bitvector.o hufftree.o priorityqueue.o
 
 .PHONY: all
-all: encoder
+all: encode
 
-encoder: $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) $(CFLAGS) -o encoder  
+encode: $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(CFLAGS) -o encode  
 
-encoder.o: encoder.c
-	$(CC) $(CFLAGS) -c encoder.c
+encode.o: encode.c
+	$(CC) $(CFLAGS) -c encode.c
 
 bitvector.o: bitvector.c
 	$(CC) $(CFLAGS) -c bitvector.c
