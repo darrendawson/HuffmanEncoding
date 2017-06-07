@@ -63,7 +63,13 @@ bool getBitValue(bitV *vector, uint32_t index)
 // returns byte at certain index
 uint8_t getByteValue(bitV *vector, uint32_t index)
 {
-  return (vector->bits)[index];
+  uint8_t byteValue = 0;
+  for (int i = 0; i < 8; i++)
+  {
+    byteValue |= getBitValue(vector, (index+1)*8 - i - 1) << (i);
+  }
+  printf("%u\n", byteValue);
+  return byteValue;
 }
 
 //---appendBit-----------------------------------------------------------

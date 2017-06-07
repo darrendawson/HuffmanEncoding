@@ -448,7 +448,7 @@ int main(int argc, char *argv[])
   encodeFile(encodedFile, huffCodes, filepath);
   //printBitVector(encodedFile);
 
-  //printf("Step 8 complete\n");
+  printf("Step 8 complete\n");
 
   
   //-------------------------------------------
@@ -472,7 +472,7 @@ int main(int argc, char *argv[])
     printf("Percent change: %f\n-\n", (1-changeInSize) * 100);
     findSpread(histogram);
     printf("-\nSize of Encoded Tree Instructions: %u\n", sizeOfHuffTree);
-    printf("Number of leaves: %u\n", numLeaves);
+    printf("Number of leaves: %u\n\n", numLeaves);
   }
   //---------------------------------------------------------------------
   // Exit program
