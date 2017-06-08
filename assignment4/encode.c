@@ -236,7 +236,7 @@ void dumpBitVectorToFile(bitV *vector, char *destination)
 {
   FILE *file;
   uint8_t currentByte;
-  printf("Destination: %s\n", destination);
+  printf("Compressed to file: %s\n", destination);
 
   if (destination == NULL)
   {
@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
       enqueueHuffPQueue(treeQueue, huffmanTree);
     }
   }
-  //printTree(huffmanTree, 2);
+  printTree(huffmanTree, 2);
   //printf("Step 6 complete\n");
 
   
@@ -445,10 +445,11 @@ int main(int argc, char *argv[])
   appendUInt64(encodedFile, sizeOfOriginalFile);
   appendUInt16(encodedFile, sizeOfHuffTree);
   appendString(encodedFile, encodedTree, sizeOfHuffTree);
+
   encodeFile(encodedFile, huffCodes, filepath);
   //printBitVector(encodedFile);
 
-  printf("Step 8 complete\n");
+  // printf("Step 8 complete\n");
 
   
   //-------------------------------------------
@@ -463,16 +464,18 @@ int main(int argc, char *argv[])
   if (verbose)
   {
     // get data
-    changeInSize = (float)(encodedFile->lastBit/8) / (float)(sizeOfOriginalFile);
+    changeInSize = (float)(encodedFile->lastBit/8) /
+      (float)(sizeOfOriginalFile);
     
     // print data
-    printf("---------------------\nStatistics\n---------------------\n");
+    printf("\n---Statistics-------------------------------------\n");
     printf("# of bytes of original file: %lu\n", sizeOfOriginalFile);
     printf("# of Bytes of encoded file:  %u\n", encodedFile->lastBit/8);
     printf("Percent change: %f\n-\n", (1-changeInSize) * 100);
     findSpread(histogram);
     printf("-\nSize of Encoded Tree Instructions: %u\n", sizeOfHuffTree);
-    printf("Number of leaves: %u\n\n", numLeaves);
+    printf("Number of leaves: %u\n", numLeaves);
+    printf("---------------------------------------------------\n\n");
   }
   //---------------------------------------------------------------------
   // Exit program

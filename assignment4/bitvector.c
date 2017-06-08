@@ -68,7 +68,7 @@ uint8_t getByteValue(bitV *vector, uint32_t index)
   {
     byteValue |= getBitValue(vector, (index+1)*8 - i - 1) << (i);
   }
-  printf("%u\n", byteValue);
+  //printf("%u\n", byteValue);
   return byteValue;
 }
 
@@ -162,6 +162,25 @@ void appendUInt16(bitV *vector, uint16_t bits)
   return;
 }
 
+//---appendUInt8---------------------------------------------------------
+
+// adds an int to end of bit vector
+void appendUInt8(bitV *vector, uint8_t bits)
+{
+  for (int i  = 7; i >=0; i--)
+  {
+    if (bits & (1 <<i))
+    {
+      appendBit(vector, true);
+    }
+    else
+    {
+      appendBit(vector, false);
+    }
+  }
+  return;
+}
+
 //---appendString--------------------------------------------------------
 
 // adds a string's bits to the end of bit vector
@@ -169,23 +188,27 @@ void appendString(bitV *vector, char *string, uint32_t size)
 {
   uint8_t currentByte;
 
+  //printf("Append String!\n");
   // go through byte by byte
-  for (uint32_t i = 0; i < size/8; i++)
+  for (uint32_t i = 0; i < size; i++)
   {
     currentByte = string[i];
 
     // add bits
-    for (uint32_t i = 0; i < 8; i++)
+    for (int i = 7; i >= 0; i--)
     {
       if (currentByte & (1 << i))
       {
+	//printf("1");
 	appendBit(vector, true);
       }
       else
       {
+	//printf("0");
 	appendBit(vector, false);
       }
     }
+    //printf("\n");
   }
   return;
 }

@@ -8,6 +8,8 @@
 # include <ctype.h>
 # include <string.h>
 
+# include "bitvector.h"
+
 typedef struct binaryTree treeNode;
 
 struct binaryTree
@@ -43,7 +45,11 @@ treeNode *join(treeNode *, treeNode *);
 void generateTreeInstructions(treeNode *, char *);
 
 // recreate a tree from instructions (this is for decoder) 
-treeNode *rebuildTree(char *, int size);
+treeNode *rebuildTree(char *, int);
+
+// steps tree using huff code until it finds corresponding byte
+void decode(treeNode *, uint32_t *, bitV *);
+
 
 //---STACK---------------------------------------------------------------
 

@@ -119,6 +119,34 @@ treeNode *rebuildTree(char *instructions, int size)
   return node;
 }
 
+//---decode--------------------------------------------------------------
+
+// steps through tree (using bit vector) until it finds a leaf
+// adds leaf to end of a string (decoded file)
+void decode(treeNode *tree, uint32_t *currentBitIndex, bitV *encoded)
+{
+  (*currentBitIndex)++;
+  
+  if (tree->leaf)
+  {
+    // add symbol to char
+    printf("%c", tree->symbol);
+  }
+  else
+  {
+    if (getBitValue(encoded, *currentBitIndex))
+    {
+      // go right
+      decode(tree->right, currentBitIndex, encoded);
+    }
+    else
+    {
+      // lo left
+      decode(tree->left, currentBitIndex, encoded);
+    }
+  }
+  return; // bubble back up
+}
 
 //=======================================================================
 // STACK
