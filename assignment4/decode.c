@@ -290,9 +290,10 @@ int main(int argc, char *argv[])
   {
     // print data
     printf("\n---Statistics-------------------------------------\n");
-    printf("# of bytes of encoded file: %lu\n", sizeOfOriginalFile);
+    printf("# of bytes of encoded file: %u\n", encodedFile->lastBit/8);
     printf("# of Bytes of decoded file:  %u\n", decodedFile->lastBit/8);
     printf("-\nSize of Encoded Tree Instructions: %u\n", sizeOfTree);
+    printf("Number of leaves: %d\n", sizeOfTree/3 + 1);
     printf("---------------------------------------------------\n\n");
 
   }

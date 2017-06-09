@@ -92,11 +92,8 @@ void setHistogram(int *histogram, uint64_t *size, char *filepath)
     histogram[currentByte] += 1;
     //(*size)++;
   }
-  histogram[32] += 1; // make sure there will always be a tree
+  histogram[0] += 1; // make sure there will always be a tree
   histogram[255] += 1; // This was Darrell Long's idea
-
-  // make sure a null node won't mess with encoding the tree instructions
-  histogram[0] = 0;
 
   fclose(file);
   free(buffer);
@@ -152,10 +149,6 @@ void assignCodes(treeNode *node, bitV **codes, bitV currentCode)
   {
     codes[node->symbol] = newBitVector(8);
     appendCode(codes[node->symbol], &currentCode);
-
-    //printf("Code: (%u, %c)", node->symbol, node->symbol);
-    //printBitVector(&currentCode);
-    //printf("\n");
     return;
   }
   
@@ -318,9 +311,16 @@ int main(int argc, char *argv[])
   uint32_t magicNumber = 0xdeadd00d;
   uint64_t sizeOfOriginalFile;
   uint16_t sizeOfHuffTree;
+
+  // ENCODED TREE INSTRUCTIONS
   char *encodedTree;
+  int index = -1; // keep track of index when building instructions
   uint32_t numLeaves = 0;
+
+  // STATISTICS
   float changeInSize = 0;
+
+
 
   //printf("Step 1 complete\n");
 
@@ -406,7 +406,8 @@ int main(int argc, char *argv[])
   assignCodes(huffmanTree, huffCodes, *currentCode);
 
   // encode the tree (instructions to recreate it)
-  generateTreeInstructions(huffmanTree, encodedTree);
+  index = -1;
+  generateTreeInstructions(huffmanTree, encodedTree, &index);
 
   // delete memory we don't need anymore
   deleteBitVector(currentCode); 

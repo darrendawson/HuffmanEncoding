@@ -72,22 +72,27 @@ treeNode *join(treeNode *l, treeNode *r)
 
 // returns a String containing instructions to rebuild tree
 // L means leaf, J means join
-void generateTreeInstructions(treeNode *node, char *instructions)
+void generateTreeInstructions(treeNode *node, char *instructions, int *index)
 {
   if (node->leaf)
   {
-    strcat(instructions, "L");
-    
-    strcat(instructions, (char*)(&(node->symbol)));
+    // attach L to signify next char is a leaf
+    (*index)++;
+    instructions[*index] = 'L';
+
+    // attach symbol
+    (*index)++;
+    instructions[*index] = (char)(node->symbol);
     return;
   }
 
   // post order recursive calls
-  generateTreeInstructions(node->left, instructions);
-  generateTreeInstructions(node->right, instructions);
+  generateTreeInstructions(node->left, instructions, index);
+  generateTreeInstructions(node->right, instructions, index);
 
   // bubble back up
-  strcat(instructions, "J"); // need to join the two children
+  (*index)++;
+  instructions[*index] = 'J';
   return;
 }
 
