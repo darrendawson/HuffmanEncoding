@@ -50,8 +50,7 @@ void deleteTree(treeNode *node)
     deleteTree(node->left);
     deleteTree(node->right);
 
-    //printf("test");
-    //deleteNode(node);
+    deleteNode(node);
   }
   return;
 }
@@ -78,19 +77,6 @@ void generateTreeInstructions(treeNode *node, char *instructions)
   if (node->leaf)
   {
     strcat(instructions, "L");
-
-    if (node->symbol == (uint8_t) 0)
-    {
-      printf("What the fuck");
-    }
-    /*
-    if (node->symbol == (uint8_t)'@')
-    {
-      printf("TEST: %c\n", node->symbol);
-      strcat(instructions, "L");
-    }
-    */
-
     
     strcat(instructions, (char*)(&(node->symbol)));
     return;
@@ -202,6 +188,10 @@ huffStack *newHuffStack(uint32_t newSize)
 // deletes a stack
 void deleteHuffStack(huffStack *stack)
 {
+  for (uint32_t i = 0; i < stack->top; i++)
+  {
+    deleteTree(stack->entries[i]);
+  }
   free(stack->entries);
   free(stack);
   return;

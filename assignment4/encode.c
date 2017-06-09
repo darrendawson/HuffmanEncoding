@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
       enqueueHuffPQueue(treeQueue, node);
     }
   }
-  //printHistogram(histogram);
+
   //printf("Step 5 complete\n");
 
   
@@ -426,12 +426,12 @@ int main(int argc, char *argv[])
     if (!emptyHuffPQueue(treeQueue))
     {
       // join the 2 nodes together and push it back into queue
-      tempTree = dequeueHuffPQueue(treeQueue);
+      tempTree = dequeueHuffPQueue(treeQueue); 
       huffmanTree = join(huffmanTree, tempTree);
       enqueueHuffPQueue(treeQueue, huffmanTree);
     }
   }
-  //printTree(huffmanTree, 2);
+
   //printf("Step 6 complete\n");
 
   
@@ -442,7 +442,6 @@ int main(int argc, char *argv[])
 
   // encode the tree (instructions to recreate it)
   generateTreeInstructions(huffmanTree, encodedTree);
-  //printf("Instructions: \n%s", encodedTree);
 
   // delete memory we don't need anymore
   deleteBitVector(currentCode); 
@@ -473,6 +472,7 @@ int main(int argc, char *argv[])
   {
     printf("Compressed to file: %s\n", destination);
   }
+  
   //-------------------------------------------
   // Print Statistics
   //-------------------------------------------
@@ -496,10 +496,10 @@ int main(int argc, char *argv[])
   // Exit program
   //---------------------------------------------------------------------
   // delete codes
-  //free(encodedTree);
-  //deleteBitVector(encodedFile);
-  //deleteCodes(huffCodes);
-  //deleteHuffPQueue(treeQueue);
+  free(encodedTree);
+  deleteBitVector(encodedFile);
+  deleteCodes(huffCodes);
+  deleteHuffPQueue(treeQueue);
 
   return 0;
 }
