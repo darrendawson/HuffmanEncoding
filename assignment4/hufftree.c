@@ -256,24 +256,6 @@ bool fullHuffStack(huffStack *stack)
 // DEBUGGING TOOLS
 //=======================================================================
 
-/*
-//---dumpTree------------------------------------------------------------
-
-// dumps a huffman tree onto a file
-void dumpTree(treeNode *t, int file)
-{
-
-}
-
-//---stepTree------------------------------------------------------------
-
-// step through a tree following the code
-int32_t *stepTree(treeNode *root, treeNode *t, uint32_t code)
-{
-
-}
-*/
-
 //---printTree-----------------------------------------------------------
 
 // prints the tree for debugging purposes

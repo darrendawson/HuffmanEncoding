@@ -56,6 +56,9 @@ void appendString(bitV *, char *, uint32_t);
 // remove last bit of vector (that we care about)
 void removeBitFromEnd(bitV *);
 
+// opens a file, converts file's bits into bit vector
+void convertFileToBitVector(char *, bitV **);
+
 // saves bits in vector to a file
 void dumpBitVectorToFile(bitV *, char *);
 

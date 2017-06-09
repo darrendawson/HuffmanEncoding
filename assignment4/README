@@ -1,3 +1,109 @@
 Darren Dawson, dwdawson@ucsc.edu
 
-This 
+Huffman Encoder and Decoder
+
+For this assignment, I worked alone. I wanted to give myself the opportunity to rise to this challenge and write the best code I could.
+It ended up making me a tad late... I had a one line bug that broke my program. After finding it, it just worked... go figure.
+As such, I didn't use any of Darrell's pre-existing code. I built my own code handling protocols instead of using his code.h
+This may have made it incompatible with Darrell's encode/decode, but that was calculated.
+All code in this program is of my own creation 
+(except Darrell's recommendation to add 1 to the frequency of 0 and 255 to ensure a tree, and his function printTree for debugging)
+  That being said, I obviously didn't come up with Huffman Encoding...
+
+-------------------------------------------
+How to run: 
+
+$make
+ - Encode: ./encode -i foo -o bar -v
+     - (-i) flag: will encode this file. In this case, we are compressing a file named foo
+     - (-o) flag: will encode to this file. In this case, we are compressing foo to a new file named bar
+     - (-v) flag: will turn on verbose mode. This mode will print out useful statistics including % change in size of file
+
+ - Decode: ./decode -i bar -o baz -v
+     - (-i) flag: will decode this file. In this case, we are decompressing a file named bar
+     - (-o) flag: will decode to this file. In this case, we are decompressing bar to a new file named baz
+     - (-v) flag: will turn on verbose mode. This mode will print out useful statistics including file sizes
+
+For both programs, the input flag is necessary! You can't encode something that doesn't exist
+	However, the output flag is optional. The program will print out bytes to stdout if there is no output destination
+
+
+-------------------------------------------
+How they work:
+
+Encode:
+ - 1) Declare necessary variables
+ - 2) Parse arguments from user to find -i, -o, and -v
+ - 3) Set up a histogram of byte frequencies from input file
+ - 4) set up data structures to have proper sizes using info you got from histogram
+ - 5) Use histogram to set up a priority queue of treeNodes
+	Each byte in histogram gets enqueued as a treeNode with frequency and symbol
+ - 6) Use priority queue to create tree
+	Go through process where you pop 2 items off, join em, and enqueue that back on
+	This will create a tree based off common frequencies
+ - 7) Use that tree to create bit codes
+	Walk the tree and create bitvectors for each leaf corresponding with the route it took to get there
+	create a string of instructions to rebuild the tree from
+ - 8) Encode the file
+	Convert the file's bytes into bit codes we just creates. This should optimally compress file size
+	Create a bitvector with the order
+		- magic number (to flag that it's an encoded file)
+		- size of original file (lets decoder know when to stop)
+		- size of huff tree instructions (lets decoder know how many bytes of instructions there are)
+		- tree instructions (so decoder can rebuild the tree)
+		- encoded file
+ - 9) Dump the bytes of the encoded file into destination. Compression complete!
+
+
+Decode:
+ - 1) Declare necessary variables
+ - 2) Parse arguemnts from user to find -i, -o, and -v
+ - 3) Get important info from encoded file:
+	Read through the first 112 bits of the encoded file to find:
+		- magic number: check if it's actually an encoded file
+		- size of original file (know when to stop decoding bits)
+		- size of huff tree instructions (know how many bytes are devoted to the tree)
+		- tree instructions (so we can rebuild the tree)
+ 	We also transform the file into a bitvector so we can manipulate it easier
+ - 4) Use the tree instructions and a stack to rebuild the tree
+	When we see an L, we push the next symbol to the stack (as a treeNode)
+	When we see a J, we pop off the top 2 treeNodes from stack, join them, and push them back to the stack
+ - 5) Decode the file
+	Now that we have the tree and the encoded file, we can use the encoded bits to walk the tree
+	When we hit a leaf, we add that leaf's symbol to the decodedFile bitvector and continue on
+	Doing this will decode the encoded file and return each code into its former byte
+ - 6) Dump the bytes of the decoded file into destination. Decompression complete!
+
+
+-------------------------------------------
+Files:
+
+  - encode.c: program to compress a file
+       utilizes bitvectors, trees (called hufftrees), and a priority queue
+
+  - decode.c: program to decompress a compressed file
+       utilizes bitvectors, trees (still called hufftrees), and a stack. The code for the stack is inside of hufftree.c
+
+
+
+  - bitvector.c/h: a bitvector
+	In order to facilitate on the go bit manipulation (rather than bytes), I added extra functionality to the bitvector.
+	This includes the addition of functions: 
+		- appendBit(): will attach a bit to the end of bitvector. I changed the struct for bitvector to include a uint32_t lastBit
+				that will point to the last bit in the vector we care about. This ensures we only keep track of correct bits
+		- appendUInt8): will attach a byte to the end of a bitvector
+		- getByteValue(): will return value of the nth byte. Good for getting characters when decoding
+		- dumpBitVectorToFile(): this is the writing to file step for encode and decode.
+
+  - hufftree.c/h: a binary tree, and a stack
+	In order to write the best code I could, I changed some of the names (but still follow Camel Case)
+	As stated before, Darrell's code for printing out the tree is included here for debugging. This includes the functions
+		- printTree()
+		- spaces()
+	I included the struct and code for a stack inside of hufftree. I did this because I thought it was cleaner this way, since the stack
+		is only ever used in one function, and that function is inside of hufftree. Doing this also avoids a situation where 
+		hufftree includes huffstack and huffstack includes hufftree and their structs depend on eachother. Overall, this way just 
+		made sense for the context of this program
+
+   - priorityqueue.c/h: a priority queue for treeNodes
+	I implemented a circular priority queue. This queue is used to create the huffman tree.

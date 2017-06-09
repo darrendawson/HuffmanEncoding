@@ -13,7 +13,6 @@
 
 # include "bitvector.h"
 # include "hufftree.h"
-# include "priorityqueue.h"
 
 
 
@@ -155,46 +154,6 @@ void getInfo(char *filePath, uint64_t *sizeOfOriginal, uint16_t *sizeOfTree,
   
   free(buffer);
   fclose(file);
-  return;
-}
-
-//---convertFileToBitVector----------------------------------------------
-
-// opens a file, converts file's bits into bit vector
-void convertFileToBitVector(char *filepath, bitV **vector)
-{
-  FILE *file;
-  long fileSize;
-  char *buffer;
-  //uint8_t currentByte;
-
-   
-  // open file
-  file = fopen(filepath, "r");
-
-  // get size of file
-  fseek(file, 0, SEEK_END);
-  fileSize = ftell(file);
-  rewind(file);
-
-  *vector = newBitVector(fileSize *10);
-
-  // allocate memory and read file
-  buffer = (char*)calloc(1, sizeof(char)*fileSize);
-  fread(buffer, 1, fileSize, file);
-
-  // set bits
-  for (int i = 0; i < fileSize; i++)
-  {
-    appendUInt8(*vector, (uint8_t)buffer[i]);
-    
-    //currentByte = (uint8_t)buffer[i];
-    //histogram[currentByte] += 1;
-    //(*size)++;
-  }
-
-  fclose(file);
-  free(buffer);
   return;
 }
 
