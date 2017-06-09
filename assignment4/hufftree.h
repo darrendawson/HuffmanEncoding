@@ -48,7 +48,7 @@ void generateTreeInstructions(treeNode *, char *);
 treeNode *rebuildTree(char *, int);
 
 // steps tree using huff code until it finds corresponding byte
-void decode(treeNode *, uint32_t *, bitV *);
+void decode(treeNode *, uint32_t *, bitV *, bitV *);
 
 
 //---STACK---------------------------------------------------------------

@@ -242,41 +242,6 @@ void encodeFile(bitV *encodedFile, bitV **codes, char *filepath)
   return;
 }
 
-//---dumpBitVectorToFile-------------------------------------------------
-
-// convert a bit vector into the encoded file
-void dumpBitVectorToFile(bitV *vector, char *destination)
-{
-  FILE *file;
-  uint8_t currentByte;
-
-  if (destination == NULL)
-  {
-    // print to standard out
-    printBitVector(vector);
-  }
-  else
-  {
-    // write it to a file
-    
-    // open file
-    file = fopen(destination, "w");
-
-    // write each byte
-    for (uint32_t i = 0; i < (vector->lastBit)/8 + 1; i++)
-    {
-      //printf("%u\n", getByteValue(vector, i));
-      currentByte = getByteValue(vector, i);
-      fwrite(&currentByte, 1, sizeof(uint8_t), file);
-    }
-    
-    fclose(file);
-  }
-  
-  
-  return;
-}
-
 //---findSpread----------------------------------------------------------
 
 // uses histogram to find and print average/sd of byte frequencies

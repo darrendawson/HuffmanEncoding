@@ -20,8 +20,8 @@
 //---parseArguments------------------------------------------------------
 
 // Uses command line flags to set up program
-void parseArguments(int argc, char *argv[],
-		    char **filepath)
+void parseArguments(int argc, char *argv[], char **filepath,
+		    char **destination, bool *verbose)
 {
   char arg; // use to hold argument
 
@@ -33,12 +33,11 @@ void parseArguments(int argc, char *argv[],
         *filepath = (char*)optarg;
 	break;
       case 'o': // output destination
-	//*destination = (char*)optarg;
+	*destination = (char*)optarg;
 	break;
       case 'v': // verbose mode
-	//*verbose = true;
+	*verbose = true;
 	break;
-	
     }
   }
   return;
@@ -153,10 +152,6 @@ void getInfo(char *filePath, uint64_t *sizeOfOriginal, uint16_t *sizeOfTree,
   {
     (*treeInstructions)[i] = buffer[14 + i];
   }
-
-
-  printf("Size of Original: %lu\n", *sizeOfOriginal);
-  printf("Size of Tree: %d\n", *sizeOfTree);
   
   free(buffer);
   fclose(file);
@@ -212,7 +207,8 @@ int main(int argc, char *argv[])
   // 1) Declare Variables
   //-------------------------------------------
   char *targetFilePath = NULL; // file to decode
-  //char *destination = NULL; // output file name
+  char *destination = NULL; // output file name
+  bool verbose = false;
   
   uint32_t magicNumber = 0xdeadd00d;
   uint64_t sizeOfOriginalFile = 0;
@@ -222,6 +218,7 @@ int main(int argc, char *argv[])
   treeNode *tree = NULL;
   
   bitV *encodedFile = NULL;
+  bitV *decodedFile = NULL;
   uint32_t currentBitIndex;
 
   //printf("Step 1 complete\n");
@@ -229,7 +226,7 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   // 2) Parse Arguments
   //-------------------------------------------
-  parseArguments(argc, argv, &targetFilePath);
+  parseArguments(argc, argv, &targetFilePath, &destination, &verbose);
   //printf("Step 2 complete\n");
 
   //-------------------------------------------
@@ -259,20 +256,52 @@ int main(int argc, char *argv[])
   // 5) decode
   //-------------------------------------------
   // find starting index for encoded file's bits
-  currentBitIndex = 111 + sizeOfTree*8; 
-
+  currentBitIndex = 111 + sizeOfTree*8;
+  decodedFile = newBitVector(sizeOfOriginalFile*2);
   for (uint32_t i = 0; i < sizeOfOriginalFile; i++)
   {
-    decode(tree, &currentBitIndex, encodedFile);
+    decode(tree, &currentBitIndex, encodedFile, decodedFile);
   }
   
   //printf("Step 5 complete\n");
 
+  //--------------------------------------------
+  // 6) dump to file
+  //--------------------------------------------
+  if (destination != NULL)
+  {
+    // print to file
+    dumpBitVectorToFile(decodedFile, destination);
+    printf("Decompressed to file: %s\n", destination);
+  }
+  else
+  {
+    // print to standard out
+    for (uint32_t i = 0; i < sizeOfOriginalFile; i++)
+    {
+      printf("%c", getByteValue(decodedFile, i));
+    }
+  }
+
+  //---------------------------------------------
+  // Print Statistics
+  //---------------------------------------------
+  if (verbose)
+  {
+    // print data
+    printf("\n---Statistics-------------------------------------\n");
+    printf("# of bytes of encoded file: %lu\n", sizeOfOriginalFile);
+    printf("# of Bytes of decoded file:  %u\n", decodedFile->lastBit/8);
+    printf("-\nSize of Encoded Tree Instructions: %u\n", sizeOfTree);
+    printf("---------------------------------------------------\n\n");
+
+  }
   //---------------------------------------------------------------------
   // exit program
   //---------------------------------------------------------------------
   free(treeInstructions);
   deleteBitVector(encodedFile);
+  deleteBitVector(decodedFile);
   deleteTree(tree);
   targetFilePath = NULL;
   
