@@ -22,7 +22,13 @@ treeNode *newNode(uint8_t s, bool l, uint64_t f)
 // deletes a node
 void deleteNode(treeNode *node)
 {
-  free(node);
+  if (node != NULL)
+  {
+    if (node->symbol)
+    {
+      free(node);
+    }
+  }
   return;
 }
 
@@ -31,18 +37,22 @@ void deleteNode(treeNode *node)
 // post-order traverse the tree and delete it
 void deleteTree(treeNode *node)
 {
-  // walk the tree and delete it
-  if (node->leaf)
+  if (node != NULL)
   {
-    deleteNode(node);
-    return;
+    // walk the tree and delete it
+    if (node->leaf)
+    {
+      deleteNode(node);
+      return;
+    }
+    
+    // call recursively
+    deleteTree(node->left);
+    deleteTree(node->right);
+
+    //printf("test");
+    //deleteNode(node);
   }
-
-  // call recursively
-  deleteTree(node->left);
-  deleteTree(node->right);
-
-  deleteNode(node);
   return;
 }
 
@@ -68,7 +78,21 @@ void generateTreeInstructions(treeNode *node, char *instructions)
   if (node->leaf)
   {
     strcat(instructions, "L");
-    strcat(instructions, (char*)&(node->symbol));
+
+    if (node->symbol == (uint8_t) 0)
+    {
+      printf("What the fuck");
+    }
+    /*
+    if (node->symbol == (uint8_t)'@')
+    {
+      printf("TEST: %c\n", node->symbol);
+      strcat(instructions, "L");
+    }
+    */
+
+    
+    strcat(instructions, (char*)(&(node->symbol)));
     return;
   }
 
@@ -91,7 +115,7 @@ treeNode *rebuildTree(char *instructions, int size)
   int index = 0;
   huffStack *stack = newHuffStack(1000);
   treeNode *node;
-  
+
   while (index < size)
   {
     if (instructions[index] == 'L')
@@ -113,8 +137,13 @@ treeNode *rebuildTree(char *instructions, int size)
     {
       // something went wrong
       printf("Couldn't parse instructions\n");
+      printf("Broke on %c at index %d\n", instructions[index], index);
+      printf("Next char: %c\n", instructions[index++]);
+      break;
     }
   }
+
+  node = join(popHuffStack(stack), popHuffStack(stack));
   deleteHuffStack(stack);
   return node;
 }
@@ -125,8 +154,7 @@ treeNode *rebuildTree(char *instructions, int size)
 // adds leaf to end of a string (decoded file)
 void decode(treeNode *tree, uint32_t *currentBitIndex, bitV *encoded)
 {
-  (*currentBitIndex)++;
-  
+  //(*currentBitIndex)++;
   if (tree->leaf)
   {
     // add symbol to char
@@ -134,6 +162,7 @@ void decode(treeNode *tree, uint32_t *currentBitIndex, bitV *encoded)
   }
   else
   {
+    (*currentBitIndex)++;
     if (getBitValue(encoded, *currentBitIndex))
     {
       // go right
@@ -141,10 +170,11 @@ void decode(treeNode *tree, uint32_t *currentBitIndex, bitV *encoded)
     }
     else
     {
-      // lo left
+      // go left
       decode(tree->left, currentBitIndex, encoded);
     }
   }
+
   return; // bubble back up
 }
 

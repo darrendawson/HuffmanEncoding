@@ -227,17 +227,20 @@ void removeBitFromEnd(bitV *vector)
 // prints the vector (up to the index we care about)
 void printBitVector(bitV *vector)
 {
-  if (vector->lastBit != (uint32_t)-1)
+  if (vector != NULL)
   {
-    for (uint32_t i = 0; i <= vector->lastBit && i < vector->size; i++)
+    if (vector->lastBit != (uint32_t)-1)
     {
-      printf("%d", getBitValue(vector, i));
+      for (uint32_t i = 0; i <= vector->lastBit && i < vector->size; i++)
+      {
+	printf("%d", getBitValue(vector, i));
+      }
+    }
+    else
+    {
+      printf("Empty");
     }
   }
-  else
-  {
-    printf("Empty");
-  }
-  printf("\n");
+  //printf("\n");
   return;
 }

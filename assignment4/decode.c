@@ -157,9 +157,7 @@ void getInfo(char *filePath, uint64_t *sizeOfOriginal, uint16_t *sizeOfTree,
 
   // get file -> bit vector
   //   start at end of tree instructions -> rest of the bits
-  *encodedFile = newBitVector(fileSize);
-
-  printf("FILE:\n%s\n", buffer + 14 + *sizeOfTree);
+  *encodedFile = newBitVector(fileSize * 9);
   for (int i = 14 + *sizeOfTree; i < fileSize; i++)
   {
     appendUInt8(*encodedFile, (uint8_t) buffer[i]);
@@ -170,6 +168,46 @@ void getInfo(char *filePath, uint64_t *sizeOfOriginal, uint16_t *sizeOfTree,
   
   free(buffer);
   fclose(file);
+  return;
+}
+
+//---convertFileToBitVector----------------------------------------------
+
+// opens a file, converts file's bits into bit vector
+void convertFileToBitVector(char *filepath, bitV **vector)
+{
+  FILE *file;
+  long fileSize;
+  char *buffer;
+  //uint8_t currentByte;
+
+   
+  // open file
+  file = fopen(filepath, "r");
+
+  // get size of file
+  fseek(file, 0, SEEK_END);
+  fileSize = ftell(file);
+  rewind(file);
+
+  *vector = newBitVector(fileSize *10);
+
+  // allocate memory and read file
+  buffer = (char*)calloc(1, sizeof(char)*fileSize);
+  fread(buffer, 1, fileSize, file);
+
+  // set bits
+  for (int i = 0; i < fileSize; i++)
+  {
+    appendUInt8(*vector, (uint8_t)buffer[i]);
+    
+    //currentByte = (uint8_t)buffer[i];
+    //histogram[currentByte] += 1;
+    //(*size)++;
+  }
+
+  fclose(file);
+  free(buffer);
   return;
 }
 
@@ -192,13 +230,17 @@ int main(int argc, char *argv[])
   char *treeInstructions = NULL;
   uint16_t sizeOfTree = 0;
   treeNode *tree = NULL;
+  
+  bitV *vector = NULL;
+  uint32_t currentBitIndex;
 
+  //printf("Step 1 complete\n");
 
   //-------------------------------------------
   // 2) Parse Arguments
   //-------------------------------------------
   parseArguments(argc, argv, &targetFilePath);
-
+  //printf("Step 2 complete\n");
 
   //-------------------------------------------
   // 3) Get Information
@@ -211,34 +253,35 @@ int main(int argc, char *argv[])
 
   getInfo(targetFilePath, &sizeOfOriginalFile, &sizeOfTree,
 	  &treeInstructions, &encodedFile);
+  convertFileToBitVector(targetFilePath, &vector);
 
-  if (treeInstructions != NULL)
-  {
-    //printf("%s\n", treeInstructions);
-    printBitVector(encodedFile);
-  }
-
+  //printf("Step 3 complete\n");
+  
   //-------------------------------------------
   // 4) rebuild the tree
   //-------------------------------------------
   tree = rebuildTree(treeInstructions, sizeOfTree-1);
 
-  printTree(tree, 4);
+  //printf("Step 4 complete\n");
 
   //-------------------------------------------
   // 5) decode
   //-------------------------------------------
-  uint32_t currentBitIndex = 0;
+
+  currentBitIndex = 111 + sizeOfTree*8;
 
   for (uint32_t i = 0; i < sizeOfOriginalFile; i++)
   {
-    decode(tree, &currentBitIndex, encodedFile);
+    decode(tree, &currentBitIndex, vector);
   }
-  printf("\n");
+  
+  //printf("Step 5 complete\n");
+
   //---------------------------------------------------------------------
   // exit program
   //---------------------------------------------------------------------
-  free(treeInstructions);
-  deleteBitVector(encodedFile);
+  //free(treeInstructions);
+  //deleteBitVector(encodedFile);
+  deleteTree(tree);
   return 0;
 }

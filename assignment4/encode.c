@@ -92,8 +92,11 @@ void setHistogram(int *histogram, uint64_t *size, char *filepath)
     histogram[currentByte] += 1;
     //(*size)++;
   }
-  histogram[0] += 1; // make sure there will always be a tree
+  histogram[32] += 1; // make sure there will always be a tree
   histogram[255] += 1; // This was Darrell Long's idea
+
+  // make sure a null node won't mess with encoding the tree instructions
+  histogram[0] = 0;
 
   fclose(file);
   free(buffer);
@@ -149,10 +152,14 @@ void assignCodes(treeNode *node, bitV **codes, bitV currentCode)
   {
     codes[node->symbol] = newBitVector(8);
     appendCode(codes[node->symbol], &currentCode);
+
+    //printf("Code: (%u, %c)", node->symbol, node->symbol);
+    //printBitVector(&currentCode);
+    //printf("\n");
     return;
   }
   
-  // walk right
+  // walk left
   appendBit(&currentCode, false);
   assignCodes(node->left, codes, currentCode);
 
@@ -217,11 +224,17 @@ void encodeFile(bitV *encodedFile, bitV **codes, char *filepath)
   buffer = (char*)calloc(1, sizeof(char)*fileSize);
   fread(buffer, 1, fileSize, file);
 
-  // set histogram
+  // convert bytes
   for (int i = 0; i < fileSize; i++)
   {
     currentByte = (uint8_t)buffer[i];
     appendCode(encodedFile, codes[currentByte]);
+
+    // print it for debugging
+    //printf("Original Byte: %u, code: ", currentByte);
+    //printBitVector(codes[currentByte]);
+    //printf("\n");
+
   }
 
   fclose(file);
@@ -236,7 +249,6 @@ void dumpBitVectorToFile(bitV *vector, char *destination)
 {
   FILE *file;
   uint8_t currentByte;
-  printf("Compressed to file: %s\n", destination);
 
   if (destination == NULL)
   {
@@ -251,7 +263,7 @@ void dumpBitVectorToFile(bitV *vector, char *destination)
     file = fopen(destination, "w");
 
     // write each byte
-    for (uint32_t i = 0; i < (vector->lastBit)/8; i++)
+    for (uint32_t i = 0; i < (vector->lastBit)/8 + 1; i++)
     {
       //printf("%u\n", getByteValue(vector, i));
       currentByte = getByteValue(vector, i);
@@ -368,7 +380,7 @@ int main(int argc, char *argv[])
   // 3) set up histogram
   //-------------------------------------------
   setHistogram(histogram, &sizeOfOriginalFile, filepath);
-  // printf("Step 3 complete\n");
+  //printf("Step 3 complete\n");
 
   
   //-------------------------------------------
@@ -419,7 +431,7 @@ int main(int argc, char *argv[])
       enqueueHuffPQueue(treeQueue, huffmanTree);
     }
   }
-  printTree(huffmanTree, 2);
+  //printTree(huffmanTree, 2);
   //printf("Step 6 complete\n");
 
   
@@ -430,10 +442,10 @@ int main(int argc, char *argv[])
 
   // encode the tree (instructions to recreate it)
   generateTreeInstructions(huffmanTree, encodedTree);
+  //printf("Instructions: \n%s", encodedTree);
 
   // delete memory we don't need anymore
-  deleteBitVector(currentCode);
-  
+  deleteBitVector(currentCode); 
   deleteTree(huffmanTree); 
   //printf("Step 7 complete\n");
 
@@ -449,7 +461,7 @@ int main(int argc, char *argv[])
   encodeFile(encodedFile, huffCodes, filepath);
   //printBitVector(encodedFile);
 
-  // printf("Step 8 complete\n");
+  //printf("Step 8 complete\n");
 
   
   //-------------------------------------------
@@ -457,7 +469,10 @@ int main(int argc, char *argv[])
   //-------------------------------------------
   dumpBitVectorToFile(encodedFile, destination);
 
-
+  if (destination != NULL)
+  {
+    printf("Compressed to file: %s\n", destination);
+  }
   //-------------------------------------------
   // Print Statistics
   //-------------------------------------------
@@ -481,10 +496,10 @@ int main(int argc, char *argv[])
   // Exit program
   //---------------------------------------------------------------------
   // delete codes
-  free(encodedTree);
-  deleteBitVector(encodedFile);
-  deleteCodes(huffCodes);
-  deleteHuffPQueue(treeQueue);
+  //free(encodedTree);
+  //deleteBitVector(encodedFile);
+  //deleteCodes(huffCodes);
+  //deleteHuffPQueue(treeQueue);
 
   return 0;
 }
