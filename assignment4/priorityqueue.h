@@ -1,7 +1,7 @@
 /*
-  Darren Dawson, dwdawson@ucsc.edu
-  priority queue of huff trees
- */
+Darren Dawson, dwdawson@ucsc.edu
+priority queue of huff trees
+*/
 
 # ifndef _Priority_Queue
 # define _Priority_Queue

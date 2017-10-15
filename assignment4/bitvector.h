@@ -1,6 +1,6 @@
 /*
   Darren Dawson, dwdawson@ucsc.edu
-  Bit Vector that keeps track of which bits we care about 
+  Bit Vector that keeps track of which bits we care about
  */
 
 # ifndef _Bit_Vector

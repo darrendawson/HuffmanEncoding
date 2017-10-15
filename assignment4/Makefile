@@ -10,7 +10,7 @@ encode: $(ENCODEOBJECTS)
 	$(CC) $(CFLAGS) $(ENCODEOBJECTS) $(CFLAGS) -o encode
 
 decode: $(DECODEOBJECTS)
-	$(CC) $(CFLAGS) $(DECODEOBJECTS) $(CFLAGS) -o decode  
+	$(CC) $(CFLAGS) $(DECODEOBJECTS) $(CFLAGS) -o decode
 
 encode.o: encode.c
 	$(CC) $(CFLAGS) -c encode.c

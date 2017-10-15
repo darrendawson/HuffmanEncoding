@@ -44,7 +44,7 @@ treeNode *join(treeNode *, treeNode *);
 // creates instructions to recreate tree (this is for encoder)
 void generateTreeInstructions(treeNode *, char *, int *);
 
-// recreate a tree from instructions (this is for decoder) 
+// recreate a tree from instructions (this is for decoder)
 treeNode *rebuildTree(char *, int);
 
 // steps tree using huff code until it finds corresponding byte

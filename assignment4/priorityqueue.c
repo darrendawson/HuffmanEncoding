@@ -55,11 +55,11 @@ bool enqueueHuffPQueue(huffPQueue *q, treeNode *tree)
       index = (index + 1) % q->size;
       if (q->entries[index] == NULL)
       {
-	break; 
+	break;
       }
     }
   }
-  
+
 
   // 2) insertion loop
   for (; index != (q->tail + 1) % q->size; index = (index + 1) % q->size)

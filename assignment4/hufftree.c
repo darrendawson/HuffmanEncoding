@@ -13,7 +13,7 @@ treeNode *newNode(uint8_t s, bool l, uint64_t f)
   node->symbol = s;
   node->frequency = f;
   node->leaf = l;
-  
+
   return node;
 }
 
@@ -45,7 +45,7 @@ void deleteTree(treeNode *node)
       deleteNode(node);
       return;
     }
-    
+
     // call recursively
     deleteTree(node->left);
     deleteTree(node->right);
@@ -61,7 +61,7 @@ void deleteTree(treeNode *node)
 treeNode *join(treeNode *l, treeNode *r)
 {
   treeNode *parent = newNode('*', false,
-			     l->frequency + r->frequency);
+  l->frequency + r->frequency);
   parent->left = l;
   parent->right = r;
 
@@ -119,7 +119,7 @@ treeNode *rebuildTree(char *instructions, int size)
     }
     else if (instructions[index] == 'J')
     {
-      // join children 
+      // join children
       node = join(popHuffStack(stack), popHuffStack(stack));
       pushHuffStack(stack, node);
       index++;
@@ -144,141 +144,140 @@ treeNode *rebuildTree(char *instructions, int size)
 // steps through tree (using bit vector) until it finds a leaf
 // adds leaf to end of a string (decoded file)
 void decode(treeNode *tree, uint32_t *currentBitIndex,
-	    bitV *encoded, bitV *decoded)
-{
-  //(*currentBitIndex)++;
-  if (tree->leaf)
+  bitV *encoded, bitV *decoded)
   {
-    // add symbol to char
-    //printf("%c", tree->symbol);
-    appendUInt8(decoded, tree->symbol);
-  }
-  else
-  {
-    (*currentBitIndex)++;
-    if (getBitValue(encoded, *currentBitIndex))
+    //(*currentBitIndex)++;
+    if (tree->leaf)
     {
-      // go right
-      decode(tree->right, currentBitIndex, encoded, decoded);
+      // add symbol to char
+      //printf("%c", tree->symbol);
+      appendUInt8(decoded, tree->symbol);
     }
     else
     {
-      // go left
-      decode(tree->left, currentBitIndex, encoded, decoded);
+      (*currentBitIndex)++;
+      if (getBitValue(encoded, *currentBitIndex))
+      {
+        // go right
+        decode(tree->right, currentBitIndex, encoded, decoded);
+      }
+      else
+      {
+        // go left
+        decode(tree->left, currentBitIndex, encoded, decoded);
+      }
     }
+
+    return; // bubble back up
   }
 
-  return; // bubble back up
-}
+  //=======================================================================
+  // STACK
+  //=======================================================================
 
-//=======================================================================
-// STACK
-//=======================================================================
+  //---newHuffStack--------------------------------------------------------
 
-//---newHuffStack--------------------------------------------------------
-
-// creates a new stack of designated size
-huffStack *newHuffStack(uint32_t newSize)
-{
-  huffStack *newStack;
-  newStack = (huffStack*)calloc(1, sizeof(huffStack));
-  newStack->entries = (treeNode**)calloc(newSize, sizeof(treeNode*));
-  
-  newStack->size = newSize;
-  newStack->top = 0;
-
-  return newStack;
-}
-
-//---deleteHuffStack-----------------------------------------------------
-
-// deletes a stack
-void deleteHuffStack(huffStack *stack)
-{
-  for (uint32_t i = 0; i < stack->top; i++)
+  // creates a new stack of designated size
+  huffStack *newHuffStack(uint32_t newSize)
   {
-    deleteTree(stack->entries[i]);
+    huffStack *newStack;
+    newStack = (huffStack*)calloc(1, sizeof(huffStack));
+    newStack->entries = (treeNode**)calloc(newSize, sizeof(treeNode*));
+
+    newStack->size = newSize;
+    newStack->top = 0;
+
+    return newStack;
   }
-  free(stack->entries);
-  free(stack);
-  return;
-}
 
-//---pushHuffStack-------------------------------------------------------
+  //---deleteHuffStack-----------------------------------------------------
 
-// pushes to top of stack
-void pushHuffStack(huffStack *stack, treeNode *node)
-{
-  // if not full
-  if (!fullHuffStack(stack))
+  // deletes a stack
+  void deleteHuffStack(huffStack *stack)
   {
-    stack->entries[stack->top] = node;
-    stack->top = (stack->top)+1;
-  }
-  return;
-}
-
-//---popHuffStack--------------------------------------------------------
-
-// pops off top of stack
-treeNode *popHuffStack(huffStack *stack)
-{
-  treeNode *node = (treeNode*)NULL;
-
-  // if not empty
-  if (!emptyHuffStack(stack))
-  {
-    node = stack->entries[(stack->top)-1]; // get value
-    stack->entries[(stack->top)-1] = NULL; // nullify value
-    stack->top -= 1;                       // pop it
-  }
-  return node;
-}
-
-//---emptyHuffStack------------------------------------------------------
-
-// returns true if stack is empty
-bool emptyHuffStack(huffStack *stack)
-{
-  return (stack->top == 0);
-}
-
-//---fullHuffStack-------------------------------------------------------
-
-// returns true if stack is full
-bool fullHuffStack(huffStack *stack)
-{
-  return (stack->top == stack->size);
-}
-
-
-//=======================================================================
-// DEBUGGING TOOLS
-//=======================================================================
-
-//---printTree-----------------------------------------------------------
-
-// prints the tree for debugging purposes
-// code written by Darrell Long
-void printTree(treeNode *t, int depth)
-{
-  if (t && t->leaf)
-  {
-    if (isalnum(t->symbol))
+    for (uint32_t i = 0; i < stack->top; i++)
     {
-      spaces(4 * depth); printf("%c (%lu)\n", t->symbol, t->frequency);
+      deleteTree(stack->entries[i]);
     }
-    else
-    {
-      spaces(4 * depth); printf("%X (%lu)\n", t->symbol, t->frequency);
-    }
+    free(stack->entries);
+    free(stack);
+    return;
   }
-  else if (t)
-  {
-    spaces(4 * depth); printf("$ (%lu)\n", t->frequency);
-    printTree(t->left, depth + 1);
-    printTree(t->right, depth + 1);
-  }
-  return;
-}
 
+  //---pushHuffStack-------------------------------------------------------
+
+  // pushes to top of stack
+  void pushHuffStack(huffStack *stack, treeNode *node)
+  {
+    // if not full
+    if (!fullHuffStack(stack))
+    {
+      stack->entries[stack->top] = node;
+      stack->top = (stack->top)+1;
+    }
+    return;
+  }
+
+  //---popHuffStack--------------------------------------------------------
+
+  // pops off top of stack
+  treeNode *popHuffStack(huffStack *stack)
+  {
+    treeNode *node = (treeNode*)NULL;
+
+    // if not empty
+    if (!emptyHuffStack(stack))
+    {
+      node = stack->entries[(stack->top)-1]; // get value
+      stack->entries[(stack->top)-1] = NULL; // nullify value
+      stack->top -= 1;                       // pop it
+    }
+    return node;
+  }
+
+  //---emptyHuffStack------------------------------------------------------
+
+  // returns true if stack is empty
+  bool emptyHuffStack(huffStack *stack)
+  {
+    return (stack->top == 0);
+  }
+
+  //---fullHuffStack-------------------------------------------------------
+
+  // returns true if stack is full
+  bool fullHuffStack(huffStack *stack)
+  {
+    return (stack->top == stack->size);
+  }
+
+
+  //=======================================================================
+  // DEBUGGING TOOLS
+  //=======================================================================
+
+  //---printTree-----------------------------------------------------------
+
+  // prints the tree for debugging purposes
+  // code written by Darrell Long
+  void printTree(treeNode *t, int depth)
+  {
+    if (t && t->leaf)
+    {
+      if (isalnum(t->symbol))
+      {
+        spaces(4 * depth); printf("%c (%lu)\n", t->symbol, t->frequency);
+      }
+      else
+      {
+        spaces(4 * depth); printf("%X (%lu)\n", t->symbol, t->frequency);
+      }
+    }
+    else if (t)
+    {
+      spaces(4 * depth); printf("$ (%lu)\n", t->frequency);
+      printTree(t->left, depth + 1);
+      printTree(t->right, depth + 1);
+    }
+    return;
+  }

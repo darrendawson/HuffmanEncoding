@@ -232,7 +232,7 @@ void convertFileToBitVector(char *filepath, bitV **vector)
   char *buffer;
   //uint8_t currentByte;
 
-   
+
   // open file
   file = fopen(filepath, "r");
 
@@ -251,7 +251,7 @@ void convertFileToBitVector(char *filepath, bitV **vector)
   for (int i = 0; i < fileSize; i++)
   {
     appendUInt8(*vector, (uint8_t)buffer[i]);
-    
+
     //currentByte = (uint8_t)buffer[i];
     //histogram[currentByte] += 1;
     //(*size)++;
@@ -278,7 +278,7 @@ void dumpBitVectorToFile(bitV *vector, char *destination)
   else
   {
     // write it to a file
-    
+
     // open file
     file = fopen(destination, "w");
 
@@ -289,11 +289,11 @@ void dumpBitVectorToFile(bitV *vector, char *destination)
       currentByte = getByteValue(vector, i);
       fwrite(&currentByte, 1, sizeof(uint8_t), file);
     }
-    
+
     fclose(file);
   }
-  
-  
+
+
   return;
 }
 

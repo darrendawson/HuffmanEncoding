@@ -67,7 +67,7 @@ uint16_t convert16BitToInt(char *bits)
   result |= ((uint8_t)(bits[0]) << 8);
   result |= ((uint8_t)(bits[1]));
   //printf("[%01x][%01x]\n", bits[0], bits[1]);
-  
+
   return result;
 }
 
@@ -77,10 +77,10 @@ uint16_t convert16BitToInt(char *bits)
 uint64_t convert64BitToInt(char *bits)
 {
   uint64_t result = 0;
- 
+
   result = convert32BitToInt(bits) << 31;
   result = convert32BitToInt(bits+4);
-  
+
   return result;
 }
 
@@ -137,13 +137,13 @@ void getInfo(char *filePath, uint64_t *sizeOfOriginal, uint16_t *sizeOfTree,
   // allocate memory and read file
   buffer = (char*)calloc(fileSize, sizeof(char));
   fread(buffer, 1, fileSize, file);
-  
+
   // get original file size | bytes [4-11]
   *sizeOfOriginal = convert64BitToInt(buffer + 4);
-  
+
   // get size of tree | bytes [12-13]
   *sizeOfTree = convert16BitToInt(buffer + 12);
-  
+
   // get encoded tree instructions
   //   start at byte 14, get next sizeOfTree bytes
   *treeInstructions = (char*)calloc(*sizeOfTree, sizeof(char));
@@ -151,7 +151,7 @@ void getInfo(char *filePath, uint64_t *sizeOfOriginal, uint16_t *sizeOfTree,
   {
     (*treeInstructions)[i] = buffer[14 + i];
   }
-  
+
   free(buffer);
   fclose(file);
   return;
@@ -168,14 +168,14 @@ int main(int argc, char *argv[])
   char *targetFilePath = NULL; // file to decode
   char *destination = NULL; // output file name
   bool verbose = false;
-  
+
   uint32_t magicNumber = 0xdeadd00d;
   uint64_t sizeOfOriginalFile = 0;
 
   char *treeInstructions = NULL;
   uint16_t sizeOfTree = 0;
   treeNode *tree = NULL;
-  
+
   bitV *encodedFile = NULL;
   bitV *decodedFile = NULL;
   uint32_t currentBitIndex;
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
   convertFileToBitVector(targetFilePath, &encodedFile);
 
   //printf("Step 3 complete\n");
-  
+
   //-------------------------------------------
   // 4) rebuild the tree
   //-------------------------------------------
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
   {
     decode(tree, &currentBitIndex, encodedFile, decodedFile);
   }
-  
+
   //printf("Step 5 complete\n");
 
   //--------------------------------------------
@@ -264,6 +264,6 @@ int main(int argc, char *argv[])
   deleteBitVector(decodedFile);
   deleteTree(tree);
   targetFilePath = NULL;
-  
+
   return 0;
 }
